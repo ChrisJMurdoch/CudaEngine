@@ -1,6 +1,6 @@
 
 #include <iostream>
-#include "..\include\math.h"
+#include "..\include\math.hpp"
 
 __global__
 void strideAdd(int *a, int *b, int *c, int size)

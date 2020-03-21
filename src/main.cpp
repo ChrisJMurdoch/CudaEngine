@@ -3,8 +3,8 @@
 #include <string>
 #include <chrono>
 #include <math.h>
-#include "..\include\main.h"
-#include "..\include\math.h"
+#include "..\include\main.hpp"
+#include "..\include\math.hpp"
 
 int main(int argc, char *argv[])
 {

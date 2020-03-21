@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 
     std::cout << "CPU...";
     auto start = std::chrono::high_resolution_clock::now().time_since_epoch();
-    cpuAdd(cpu_a, cpu_b, cpu_c, N);
+    cudamath::cpuAdd(cpu_a, cpu_b, cpu_c, N);
     auto end = std::chrono::high_resolution_clock::now().time_since_epoch();
     std::cout << "cpuAdd time: " << (end.count()-start.count())/1000000 << "ms." << std::endl;
 
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
     std::cout << "GPU...";
     start = std::chrono::high_resolution_clock::now().time_since_epoch();
-    gpuAdd(gpu_a, gpu_b, gpu_c, N, warps);
+    cudamath::gpuAdd(gpu_a, gpu_b, gpu_c, N, warps);
     end = std::chrono::high_resolution_clock::now().time_since_epoch();
     std::cout << "gpuAdd time: " << (end.count()-start.count())/1000000 << "ms." << std::endl;
 

@@ -2,48 +2,52 @@
 #include <iostream>
 #include "..\include\math.hpp"
 
-__global__
-void strideAdd(int *a, int *b, int *c, int size)
-{
-    int index = threadIdx.x + blockIdx.x * blockDim.x;
-    for (int i=index; i<size; i += blockDim.x*gridDim.x)
-        c[i] = a[i] + b[i];
-}
+namespace cudamath {
 
-void gpuAdd(int *a, int *b, int *c, int n, int warps)
-{
-    // Allocate device memory
-    int *d_a, *d_b, *d_c;
-    cudaCheck( cudaMalloc(&d_a, n*sizeof(int)) );
-    cudaCheck( cudaMalloc(&d_b, n*sizeof(int)) );
-    cudaCheck( cudaMalloc(&d_c, n*sizeof(int)) );
+    __global__
+    void strideAdd(int *a, int *b, int *c, int size)
+    {
+        int index = threadIdx.x + blockIdx.x * blockDim.x;
+        for (int i=index; i<size; i += blockDim.x*gridDim.x)
+            c[i] = a[i] + b[i];
+    }
 
-    // Send memory to device
-    cudaCheck( cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice) );
-    cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
+    void gpuAdd(int *a, int *b, int *c, int n, int warps)
+    {
+        // Allocate device memory
+        int *d_a, *d_b, *d_c;
+        cudaCheck( cudaMalloc(&d_a, n*sizeof(int)) );
+        cudaCheck( cudaMalloc(&d_b, n*sizeof(int)) );
+        cudaCheck( cudaMalloc(&d_c, n*sizeof(int)) );
 
-    // Run kernel
-    int sms;
-    cudaCheck( cudaDeviceGetAttribute(&sms, cudaDevAttrMultiProcessorCount, 0) );
-    strideAdd<<<sms, warps*32>>>(d_a, d_b, d_c, n);
+        // Send memory to device
+        cudaCheck( cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice) );
+        cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
 
-    // Fetch memory from device
-    cudaCheck( cudaMemcpy(c, d_c, n*sizeof(int), cudaMemcpyDeviceToHost) );
+        // Run kernel
+        int sms;
+        cudaCheck( cudaDeviceGetAttribute(&sms, cudaDevAttrMultiProcessorCount, 0) );
+        strideAdd<<<sms, warps*32>>>(d_a, d_b, d_c, n);
 
-    // Cleanup
-    cudaCheck( cudaFree(d_a) );
-    cudaCheck( cudaFree(d_b) );
-    cudaCheck( cudaFree(d_c) );
-}
+        // Fetch memory from device
+        cudaCheck( cudaMemcpy(c, d_c, n*sizeof(int), cudaMemcpyDeviceToHost) );
 
-void cpuAdd(int *a, int *b, int *c, int n)
-{
-    for (int i=0; i<n; i++)
-        c[i] = a[i] + b[i];
-}
+        // Cleanup
+        cudaCheck( cudaFree(d_a) );
+        cudaCheck( cudaFree(d_b) );
+        cudaCheck( cudaFree(d_c) );
+    }
 
-void cudaCheck(cudaError_t err)
-{
-    if (err != cudaSuccess)
-        std::cout << "Cuda error: " << cudaGetErrorString(err);
+    void cpuAdd(int *a, int *b, int *c, int n)
+    {
+        for (int i=0; i<n; i++)
+            c[i] = a[i] + b[i];
+    }
+
+    void cudaCheck(cudaError_t err)
+    {
+        if (err != cudaSuccess)
+            std::cout << "Cuda error: " << cudaGetErrorString(err);
+    }
+
 }

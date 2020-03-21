@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <math.h>
+
 #include "..\include\main.hpp"
 #include "..\include\math.hpp"
 
@@ -25,40 +26,27 @@ int main(int argc, char *argv[])
     std::cout << std::endl << "Configured to: " << warps << " warps (" << warps*32 << " threads) per thread-block." << std::endl;
 
     // Test library
-    const int N = pow(10, 8);
-
-    // CPU add
-    int *cpu_a = new int[N], *cpu_b = new int[N], *cpu_c = new int[N];
-    populate(cpu_a, cpu_b, N);
-
-    std::cout << "CPU...";
+    const int N = 3*pow(10, 8);
+    int *a = new int[N], *b = new int[N], *c = new int[N];
+    populate(a, b, N);
+    
     auto start = std::chrono::high_resolution_clock::now().time_since_epoch();
-    cudamath::cpuAdd(cpu_a, cpu_b, cpu_c, N);
+    cudamath::vectorAdd(a, b, c, N, warps);
     auto end = std::chrono::high_resolution_clock::now().time_since_epoch();
-    std::cout << "cpuAdd time: " << (end.count()-start.count())/1000000 << "ms." << std::endl;
-
-    delete[] cpu_a;
-    delete[] cpu_b;
-
-    // GPU add
-    int *gpu_a = new int[N], *gpu_b = new int[N], *gpu_c = new int[N];
-    populate(gpu_a, gpu_b, N);
-
-    std::cout << "GPU...";
+    std::cout << "gpuAdd   time: " << (end.count()-start.count())/1000000 << "ms." << std::endl;
+    
     start = std::chrono::high_resolution_clock::now().time_since_epoch();
-    cudamath::gpuAdd(gpu_a, gpu_b, gpu_c, N, warps);
+    cudamath::vectorInAdd(a, b, N, warps);
     end = std::chrono::high_resolution_clock::now().time_since_epoch();
-    std::cout << "gpuAdd time: " << (end.count()-start.count())/1000000 << "ms." << std::endl;
-
-    delete[] gpu_a;
-    delete[] gpu_b;
-
-    // Validate GPU output with CPU output
-    validate(cpu_c, gpu_c, N);
+    std::cout << "gpuInAdd time: " << (end.count()-start.count())/1000000 << "ms." << std::endl;
+    
+    // Validate outputs against each other
+    validate(a, c, N);
 
     // Cleanup
-    delete[] cpu_c;
-    delete[] gpu_c;
+    delete[] a;
+    delete[] b;
+    delete[] c;
 
     return 0;
 }
@@ -78,9 +66,9 @@ void validate(int *cpu, int *gpu, int n)
     {
         if (cpu[i] != gpu[i])
         {
-            std::cout << "GPU-CPU diverge at index: " << i << "." << std::endl;
+            std::cout << "Arrays diverge at index: " << i << "." << std::endl;
             return;
         }
     }
-    std::cout << "GPU-CPU match." << std::endl;
+    std::cout << "Arrays match." << std::endl;
 }

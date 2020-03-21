@@ -1,37 +1,49 @@
 
-__global__ void addKernel(int *a, int *b, int *c, int size)
+#include <iostream>
+#include "..\include\math.h"
+
+__global__
+void strideAdd(int *a, int *b, int *c, int size)
 {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
-    if (index < size) c[index] = a[index] + b[index];
+    for (int i=index; i<size; i += blockDim.x*gridDim.x)
+        c[i] = a[i] + b[i];
 }
 
-/** Function for adding two arrays together on the GPU. */
-void gpu_add(int *a, int *b, int *c, int n, int warps=4)
+void gpuAdd(int *a, int *b, int *c, int n, int warps)
 {
-    // Copy into device memory
+    // Allocate device memory
     int *d_a, *d_b, *d_c;
-    cudaMalloc(&d_a, n*sizeof(int));
-    cudaMalloc(&d_b, n*sizeof(int));
-    cudaMalloc(&d_c, n*sizeof(int));
-    cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice);
+    cudaCheck( cudaMalloc(&d_a, n*sizeof(int)) );
+    cudaCheck( cudaMalloc(&d_b, n*sizeof(int)) );
+    cudaCheck( cudaMalloc(&d_c, n*sizeof(int)) );
+
+    // Send memory to device
+    cudaCheck( cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice) );
+    cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
 
     // Run kernel
-    int threads = warps*32;
-    addKernel<<<(n/threads)+1, threads>>>(d_a, d_b, d_c, n);
+    int sms;
+    cudaCheck( cudaDeviceGetAttribute(&sms, cudaDevAttrMultiProcessorCount, 0) );
+    strideAdd<<<sms, warps*32>>>(d_a, d_b, d_c, n);
 
-    // Retrieve device memory
-    cudaMemcpy(c, d_c, n*sizeof(int), cudaMemcpyDeviceToHost);
+    // Fetch memory from device
+    cudaCheck( cudaMemcpy(c, d_c, n*sizeof(int), cudaMemcpyDeviceToHost) );
 
     // Cleanup
-    cudaFree(d_a);
-    cudaFree(d_b);
-    cudaFree(d_c);
+    cudaCheck( cudaFree(d_a) );
+    cudaCheck( cudaFree(d_b) );
+    cudaCheck( cudaFree(d_c) );
 }
 
-/** Function for adding two arrays together on the CPU */
-void cpu_add(int *a, int *b, int *dest, int n)
+void cpuAdd(int *a, int *b, int *c, int n)
 {
     for (int i=0; i<n; i++)
-        dest[i] = a[i] + b[i];
+        c[i] = a[i] + b[i];
+}
+
+void cudaCheck(cudaError_t err)
+{
+    if (err != cudaSuccess)
+        std::cout << "Cuda error: " << cudaGetErrorString(err);
 }

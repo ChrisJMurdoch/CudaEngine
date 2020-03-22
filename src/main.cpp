@@ -5,97 +5,52 @@
 #include <math.h>
 
 #include "..\include\main.hpp"
+#include "..\include\tests.hpp"
 #include "..\include\math.hpp"
+
+#define PINNED_MEMORY true
 
 int main(int argc, char *argv[])
 {
-    // Get TESTS
+    // Get parameters
     int TESTS = 10;
     getArg(argc, argv, 1, &TESTS);
-    
-    // Get N
+
     int power = 6;
     getArg(argc, argv, 2, &power);
     int N = pow(10, power);
-    
-    // Get WARPS
+
     int WARPS = 4;
     getArg(argc, argv, 3, &WARPS);
 
     // Display config
-    std::cout << "Config: " << TESTS << " tests, 10^" << power << " vector size, " << WARPS << " warps per block." << std::endl;
+    std::cout << "Config: " << TESTS << " tests, 10^" << power <<
+        " vector size, " << WARPS << " warps per block." << std::endl;
+
+    // Allocate host memory
+#if PINNED_MEMORY
+    int *a; cudaCheck( cudaMallocHost((void**)&a, N*sizeof(int)) );
+    int *b; cudaCheck( cudaMallocHost((void**)&b, N*sizeof(int)) );
+    int *c; cudaCheck( cudaMallocHost((void**)&c, N*sizeof(int)) );
+#else
+    int *a = new int[N];
+    int *b = new int[N];
+    int *c = new int[N];
+#endif
+    
+    // Warmup
+    cudamath::vectorSub(a, b, c, N, WARPS);
 
     // Test engine
-    int *a = new int[N], *b = new int[N], *c = new int[N];
-    auto start = std::chrono::high_resolution_clock::now().time_since_epoch();
-    auto end = std::chrono::high_resolution_clock::now().time_since_epoch();
-    int ms;
-
-    // WARMUP
-
-    std::cerr << "Warming up..." << std::endl;
-    for (int i=0; i<TESTS; i++)
-    {
-        populate(a, b, N);
-        cudamath::vectorSub(a, b, c, N, WARPS);
-    }
-
-    // ADD
-
-    ms = 0;
-    std::cerr << "vectorAdd:   running..." << std::endl;
-    for (int i=0; i<TESTS; i++)
-    {
-        populate(a, b, N);
-        start = std::chrono::high_resolution_clock::now().time_since_epoch();
-        cudamath::vectorAdd(a, b, c, N, WARPS);
-        end = std::chrono::high_resolution_clock::now().time_since_epoch();
-        ms += (end.count()-start.count()) / 1000000;
-    }
-    std::cout << "vectorAdd:   " << ms / TESTS << "ms avg." << std::endl;
+    int va = 0; testVectorAdd(a, b, c, TESTS, N, WARPS, &va);
+    int via = 0; testVectorInAdd(a, b, TESTS, N, WARPS, &via);
+    int vs = 0; testVectorSub(a, b, c, TESTS, N, WARPS, &vs);
+    int vis = 0; testVectorInSub(a, b, TESTS, N, WARPS, &vis);
     
-    ms = 0;
-    std::cerr << "vectorInAdd: running..." << std::endl;
-    for (int i=0; i<TESTS; i++)
-    {
-        populate(a, b, N);
-        start = std::chrono::high_resolution_clock::now().time_since_epoch();
-        cudamath::vectorInAdd(a, b, N, WARPS);
-        end = std::chrono::high_resolution_clock::now().time_since_epoch();
-        ms += (end.count()-start.count()) / 1000000;
-    }
-    std::cout << "vectorInAdd: " << ms / TESTS << "ms avg." << std::endl;
-
-    // SUB
-
-    ms = 0;
-    std::cerr << "vectorSub:   running..." << std::endl;
-    for (int i=0; i<TESTS; i++)
-    {
-        populate(a, b, N);
-        start = std::chrono::high_resolution_clock::now().time_since_epoch();
-        cudamath::vectorSub(a, b, c, N, WARPS);
-        end = std::chrono::high_resolution_clock::now().time_since_epoch();
-        ms += (end.count()-start.count()) / 1000000;
-    }
-    std::cout << "vectorSub:   " << ms / TESTS << "ms avg." << std::endl;
-    
-    ms = 0;
-    std::cerr << "vectorInSub: running..." << std::endl;
-    for (int i=0; i<TESTS; i++)
-    {
-        populate(a, b, N);
-        start = std::chrono::high_resolution_clock::now().time_since_epoch();
-        cudamath::vectorInSub(a, b, N, WARPS);
-        end = std::chrono::high_resolution_clock::now().time_since_epoch();
-        ms += (end.count()-start.count()) / 1000000;
-    }
-    std::cout << "vectorInSub: " << ms / TESTS << "ms avg.";
-
     // Cleanup
-    delete[] a;
-    delete[] b;
-    delete[] c;
+    cudaFreeHost(a);
+    cudaFreeHost(b);
+    cudaFreeHost(c);
 
     return 0;
 }
@@ -113,26 +68,4 @@ void getArg(int argc, char *argv[], int index, int *dest)
             std::cerr << "Parameter parsing error." << std::endl;
         }
     }
-}
-
-void populate(int *array_a, int *array_b, int n)
-{
-    for (int i=0; i<n; i++)
-    {
-        array_a[i] = i;
-        array_b[i] = i*2;
-    }
-}
-
-void validate(int *a, int *b, int n)
-{
-    for (int i=0; i<n; i++)
-    {
-        if (a[i] != b[i])
-        {
-            std::cout << "Arrays diverge at index: " << i << "." << std::endl;
-            return;
-        }
-    }
-    std::cout << "Arrays match." << std::endl;
 }

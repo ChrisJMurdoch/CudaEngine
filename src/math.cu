@@ -37,7 +37,39 @@ void cudamath::vectorInAdd(int *a, int *b, int n, int warps)
     multiCudaFree(d_a, d_b);
 }
 
-// Macros
+// VECTOR SUBTRACTION
+
+void cudamath::vectorSub(int *a, int *b, int *c, int n, int warps)
+{
+    // Host memory -> Device memory
+    int *d_a, *d_b, *d_c;
+    multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b, (void **)&d_c);
+    cudaCheck( cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice) );
+    cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
+    // Run kernel
+    int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
+    kernels::vectorSub<<<sm, warps*32>>>(d_a, d_b, d_c, n);
+    // Device memory -> Host memory
+    cudaCheck( cudaMemcpy(c, d_c, n*sizeof(int), cudaMemcpyDeviceToHost) );
+    multiCudaFree(d_a, d_b, d_c);
+}
+
+void cudamath::vectorInSub(int *a, int *b, int n, int warps)
+{
+    // Host memory -> Device memory
+    int *d_a, *d_b;
+    multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b);
+    cudaCheck( cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice) );
+    cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
+    // Run kernel
+    int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
+    kernels::vectorInSub<<<sm, warps*32>>>(d_a, d_b, n);
+    // Device memory -> Host memory
+    cudaCheck( cudaMemcpy(a, d_a, n*sizeof(int), cudaMemcpyDeviceToHost) );
+    multiCudaFree(d_a, d_b);
+}
+
+// MACROS
 
 inline void cudaCheck(cudaError_t err)
 {

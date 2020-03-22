@@ -10,6 +10,12 @@ namespace cudamath
 
     /** Function for adding two arrays together in-place on the GPU */
     void vectorInAdd(int *a, int *b, int n, int warps=4);
+
+    /** Function for subtracting one vector from another on the GPU */
+    void vectorSub(int *a, int *b, int *c, int n, int warps=4);
+
+    /** Function for subtracting one vector from another in-place on the GPU */
+    void vectorInSub(int *a, int *b, int n, int warps=4);
 }
 
 /** Inline error checking function for cuda calls. */

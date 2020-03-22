@@ -9,39 +9,88 @@
 
 int main(int argc, char *argv[])
 {
-    // Get warps
-    int warps = 4;
-    if (argc > 1)
-    {
-        try
-        {
-            warps = std::stoi(argv[1]);
-        }
-        catch (std::invalid_argument const &e)
-        {
-            std::cout << "Parameter parsing error." << std::endl;
-            return 0;
-        }
-    }
-    std::cout << std::endl << "Configured to: " << warps << " warps (" << warps*32 << " threads) per thread-block." << std::endl;
+    // Get TESTS
+    int TESTS = 10;
+    getArg(argc, argv, 1, &TESTS);
+    
+    // Get N
+    int power = 6;
+    getArg(argc, argv, 2, &power);
+    int N = pow(10, power);
+    
+    // Get WARPS
+    int WARPS = 4;
+    getArg(argc, argv, 3, &WARPS);
 
-    // Test library
-    const int N = 3*pow(10, 8);
+    // Display config
+    std::cout << "Config: " << TESTS << " tests, 10^" << power << " vector size, " << WARPS << " warps per block." << std::endl;
+
+    // Test engine
     int *a = new int[N], *b = new int[N], *c = new int[N];
-    populate(a, b, N);
-    
     auto start = std::chrono::high_resolution_clock::now().time_since_epoch();
-    cudamath::vectorAdd(a, b, c, N, warps);
     auto end = std::chrono::high_resolution_clock::now().time_since_epoch();
-    std::cout << "gpuAdd   time: " << (end.count()-start.count())/1000000 << "ms." << std::endl;
+    int ms;
+
+    // WARMUP
+
+    std::cerr << "Warming up..." << std::endl;
+    for (int i=0; i<TESTS; i++)
+    {
+        populate(a, b, N);
+        cudamath::vectorSub(a, b, c, N, WARPS);
+    }
+
+    // ADD
+
+    ms = 0;
+    std::cerr << "vectorAdd:   running..." << std::endl;
+    for (int i=0; i<TESTS; i++)
+    {
+        populate(a, b, N);
+        start = std::chrono::high_resolution_clock::now().time_since_epoch();
+        cudamath::vectorAdd(a, b, c, N, WARPS);
+        end = std::chrono::high_resolution_clock::now().time_since_epoch();
+        ms += (end.count()-start.count()) / 1000000;
+    }
+    std::cout << "vectorAdd:   " << ms / TESTS << "ms avg." << std::endl;
     
-    start = std::chrono::high_resolution_clock::now().time_since_epoch();
-    cudamath::vectorInAdd(a, b, N, warps);
-    end = std::chrono::high_resolution_clock::now().time_since_epoch();
-    std::cout << "gpuInAdd time: " << (end.count()-start.count())/1000000 << "ms." << std::endl;
+    ms = 0;
+    std::cerr << "vectorInAdd: running..." << std::endl;
+    for (int i=0; i<TESTS; i++)
+    {
+        populate(a, b, N);
+        start = std::chrono::high_resolution_clock::now().time_since_epoch();
+        cudamath::vectorInAdd(a, b, N, WARPS);
+        end = std::chrono::high_resolution_clock::now().time_since_epoch();
+        ms += (end.count()-start.count()) / 1000000;
+    }
+    std::cout << "vectorInAdd: " << ms / TESTS << "ms avg." << std::endl;
+
+    // SUB
+
+    ms = 0;
+    std::cerr << "vectorSub:   running..." << std::endl;
+    for (int i=0; i<TESTS; i++)
+    {
+        populate(a, b, N);
+        start = std::chrono::high_resolution_clock::now().time_since_epoch();
+        cudamath::vectorSub(a, b, c, N, WARPS);
+        end = std::chrono::high_resolution_clock::now().time_since_epoch();
+        ms += (end.count()-start.count()) / 1000000;
+    }
+    std::cout << "vectorSub:   " << ms / TESTS << "ms avg." << std::endl;
     
-    // Validate outputs against each other
-    validate(a, c, N);
+    ms = 0;
+    std::cerr << "vectorInSub: running..." << std::endl;
+    for (int i=0; i<TESTS; i++)
+    {
+        populate(a, b, N);
+        start = std::chrono::high_resolution_clock::now().time_since_epoch();
+        cudamath::vectorInSub(a, b, N, WARPS);
+        end = std::chrono::high_resolution_clock::now().time_since_epoch();
+        ms += (end.count()-start.count()) / 1000000;
+    }
+    std::cout << "vectorInSub: " << ms / TESTS << "ms avg.";
 
     // Cleanup
     delete[] a;
@@ -49,6 +98,21 @@ int main(int argc, char *argv[])
     delete[] c;
 
     return 0;
+}
+
+void getArg(int argc, char *argv[], int index, int *dest)
+{
+    if (argc > index)
+    {
+        try
+        {
+            *dest = std::stoi(argv[index]);
+        }
+        catch (std::invalid_argument const &e)
+        {
+            std::cerr << "Parameter parsing error." << std::endl;
+        }
+    }
 }
 
 void populate(int *array_a, int *array_b, int n)
@@ -60,11 +124,11 @@ void populate(int *array_a, int *array_b, int n)
     }
 }
 
-void validate(int *cpu, int *gpu, int n)
+void validate(int *a, int *b, int n)
 {
     for (int i=0; i<n; i++)
     {
-        if (cpu[i] != gpu[i])
+        if (a[i] != b[i])
         {
             std::cout << "Arrays diverge at index: " << i << "." << std::endl;
             return;

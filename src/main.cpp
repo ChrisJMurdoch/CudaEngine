@@ -10,7 +10,6 @@
 
 #define DEBUG_OUTPUT false
 #define PINNED_MEMORY true
-#define WARPS 8
 
 int main(int argc, char *argv[])
 {
@@ -41,13 +40,13 @@ int main(int argc, char *argv[])
 #endif
     
     // Warmup
-    cudamath::vectorSub(a, b, c, N, WARPS);
+    cudamath::vectorSub(a, b, c, N);
 
     // Profile engine
-    int va = 0; testVectorAdd(a, b, c, TESTS, N, WARPS, &va);
-    int via = 0; testVectorInAdd(a, b, TESTS, N, WARPS, &via);
-    int vs = 0; testVectorSub(a, b, c, TESTS, N, WARPS, &vs);
-    int vis = 0; testVectorInSub(a, b, TESTS, N, WARPS, &vis);
+    int va = 0; testVectorAdd(a, b, c, TESTS, N, &va);
+    int via = 0; testVectorInAdd(a, b, TESTS, N, &via);
+    int vs = 0; testVectorSub(a, b, c, TESTS, N, &vs);
+    int vis = 0; testVectorInSub(a, b, TESTS, N, &vis);
 
     // Cleanup
 #if PINNED_MEMORY

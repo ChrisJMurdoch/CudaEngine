@@ -5,9 +5,11 @@
 
 #include ".\kernels.cu"
 
+#define WARPS 8
+
 // VECTOR ADDITION
 
-void cudamath::vectorAdd(int *a, int *b, int *c, int n, int warps)
+void cudamath::vectorAdd(int *a, int *b, int *c, int n)
 {
     // Host memory -> Device memory
     int *d_a, *d_b, *d_c;
@@ -16,13 +18,13 @@ void cudamath::vectorAdd(int *a, int *b, int *c, int n, int warps)
     cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
     // Run kernel
     int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
-    kernels::vectorAdd<<<sm, warps*32>>>(d_a, d_b, d_c, n);
+    kernels::vectorAdd<<<sm, WARPS*32>>>(d_a, d_b, d_c, n);
     // Device memory -> Host memory
     cudaCheck( cudaMemcpy(c, d_c, n*sizeof(int), cudaMemcpyDeviceToHost) );
     multiCudaFree(d_a, d_b, d_c);
 }
 
-void cudamath::vectorInAdd(int *a, int *b, int n, int warps)
+void cudamath::vectorInAdd(int *a, int *b, int n)
 {
     // Host memory -> Device memory
     int *d_a, *d_b;
@@ -31,7 +33,7 @@ void cudamath::vectorInAdd(int *a, int *b, int n, int warps)
     cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
     // Run kernel
     int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
-    kernels::vectorInAdd<<<sm, warps*32>>>(d_a, d_b, n);
+    kernels::vectorInAdd<<<sm, WARPS*32>>>(d_a, d_b, n);
     // Device memory -> Host memory
     cudaCheck( cudaMemcpy(a, d_a, n*sizeof(int), cudaMemcpyDeviceToHost) );
     multiCudaFree(d_a, d_b);
@@ -39,7 +41,7 @@ void cudamath::vectorInAdd(int *a, int *b, int n, int warps)
 
 // VECTOR SUBTRACTION
 
-void cudamath::vectorSub(int *a, int *b, int *c, int n, int warps)
+void cudamath::vectorSub(int *a, int *b, int *c, int n)
 {
     // Host memory -> Device memory
     int *d_a, *d_b, *d_c;
@@ -48,13 +50,13 @@ void cudamath::vectorSub(int *a, int *b, int *c, int n, int warps)
     cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
     // Run kernel
     int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
-    kernels::vectorSub<<<sm, warps*32>>>(d_a, d_b, d_c, n);
+    kernels::vectorSub<<<sm, WARPS*32>>>(d_a, d_b, d_c, n);
     // Device memory -> Host memory
     cudaCheck( cudaMemcpy(c, d_c, n*sizeof(int), cudaMemcpyDeviceToHost) );
     multiCudaFree(d_a, d_b, d_c);
 }
 
-void cudamath::vectorInSub(int *a, int *b, int n, int warps)
+void cudamath::vectorInSub(int *a, int *b, int n)
 {
     // Host memory -> Device memory
     int *d_a, *d_b;
@@ -63,7 +65,7 @@ void cudamath::vectorInSub(int *a, int *b, int n, int warps)
     cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
     // Run kernel
     int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
-    kernels::vectorInSub<<<sm, warps*32>>>(d_a, d_b, n);
+    kernels::vectorInSub<<<sm, WARPS*32>>>(d_a, d_b, n);
     // Device memory -> Host memory
     cudaCheck( cudaMemcpy(a, d_a, n*sizeof(int), cudaMemcpyDeviceToHost) );
     multiCudaFree(d_a, d_b);

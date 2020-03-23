@@ -5,37 +5,72 @@
 
 #include ".\kernels.cu"
 
-#define WARPS 8
+#define WARPS 16
+#define STREAMS 8
+
+// DEVICE SETUP
+
+int cudamath::sm;
+void cudamath::initDevice()
+{
+    cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
+}
 
 // VECTOR ADDITION
 
 void cudamath::vectorAdd(int *a, int *b, int *c, int n)
 {
-    // Host memory -> Device memory
+    // Allocate device memory
     int *d_a, *d_b, *d_c;
     multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b, (void **)&d_c);
-    cudaCheck( cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice) );
-    cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
-    // Run kernel
-    int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
-    kernels::vectorAdd<<<sm, WARPS*32>>>(d_a, d_b, d_c, n);
-    // Device memory -> Host memory
-    cudaCheck( cudaMemcpy(c, d_c, n*sizeof(int), cudaMemcpyDeviceToHost) );
+    // Clip streams for small inputs
+    int realStreams = STREAMS<=n ? STREAMS : 1;
+    // Create stream array
+    cudaStream_t *streams = new cudaStream_t[realStreams];
+    int streamLength = (n + (n%realStreams)) / realStreams;
+    // For each stream
+    for (int i=0; i < realStreams; ++i)
+    {
+        int offset = i*streamLength;
+        int realsize = offset+streamLength>n ? n%streamLength : streamLength;
+        cudaCheck( cudaStreamCreate(&streams[i]) );
+        // Send data on stream
+        cudaCheck( cudaMemcpyAsync(&d_a[offset], &a[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
+        cudaCheck( cudaMemcpyAsync(&d_b[offset], &b[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
+        // Run kernel on stream
+        kernels::vectorAdd<<<sm, WARPS*32, 0, streams[i]>>>( &d_a[offset], &d_b[offset], &d_c[offset], realsize);
+        // Retrieve data on stream
+        cudaCheck( cudaMemcpyAsync(&c[offset], &d_c[offset], realsize*sizeof(int), cudaMemcpyDeviceToHost, streams[i]) );
+    }
+    cudaDeviceSynchronize();
     multiCudaFree(d_a, d_b, d_c);
 }
 
 void cudamath::vectorInAdd(int *a, int *b, int n)
 {
-    // Host memory -> Device memory
+    // Allocate device memory
     int *d_a, *d_b;
     multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b);
-    cudaCheck( cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice) );
-    cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
-    // Run kernel
-    int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
-    kernels::vectorInAdd<<<sm, WARPS*32>>>(d_a, d_b, n);
-    // Device memory -> Host memory
-    cudaCheck( cudaMemcpy(a, d_a, n*sizeof(int), cudaMemcpyDeviceToHost) );
+    // Clip streams for small inputs
+    int realStreams = STREAMS<=n ? STREAMS : 1;
+    // Create stream array
+    cudaStream_t *streams = new cudaStream_t[realStreams];
+    int streamLength = (n + (n%realStreams)) / realStreams;
+    // For each stream
+    for (int i=0; i < realStreams; ++i)
+    {
+        int offset = i*streamLength;
+        int realsize = offset+streamLength>n ? n%streamLength : streamLength;
+        cudaCheck( cudaStreamCreate(&streams[i]) );
+        // Send data on stream
+        cudaCheck( cudaMemcpyAsync(&d_a[offset], &a[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
+        cudaCheck( cudaMemcpyAsync(&d_b[offset], &b[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
+        // Run kernel on stream
+        kernels::vectorInAdd<<<sm, WARPS*32, 0, streams[i]>>>( &d_a[offset], &d_b[offset], realsize);
+        // Retrieve data on stream
+        cudaCheck( cudaMemcpyAsync(&a[offset], &d_a[offset], realsize*sizeof(int), cudaMemcpyDeviceToHost, streams[i]) );
+    }
+    cudaDeviceSynchronize();
     multiCudaFree(d_a, d_b);
 }
 
@@ -43,31 +78,57 @@ void cudamath::vectorInAdd(int *a, int *b, int n)
 
 void cudamath::vectorSub(int *a, int *b, int *c, int n)
 {
-    // Host memory -> Device memory
+    // Allocate device memory
     int *d_a, *d_b, *d_c;
     multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b, (void **)&d_c);
-    cudaCheck( cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice) );
-    cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
-    // Run kernel
-    int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
-    kernels::vectorSub<<<sm, WARPS*32>>>(d_a, d_b, d_c, n);
-    // Device memory -> Host memory
-    cudaCheck( cudaMemcpy(c, d_c, n*sizeof(int), cudaMemcpyDeviceToHost) );
+    // Clip streams for small inputs
+    int realStreams = STREAMS<=n ? STREAMS : 1;
+    // Create stream array
+    cudaStream_t *streams = new cudaStream_t[realStreams];
+    int streamLength = (n + (n%realStreams)) / realStreams;
+    // For each stream
+    for (int i=0; i < realStreams; ++i)
+    {
+        int offset = i*streamLength;
+        int realsize = offset+streamLength>n ? n%streamLength : streamLength;
+        cudaCheck( cudaStreamCreate(&streams[i]) );
+        // Send data on stream
+        cudaCheck( cudaMemcpyAsync(&d_a[offset], &a[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
+        cudaCheck( cudaMemcpyAsync(&d_b[offset], &b[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
+        // Run kernel on stream
+        kernels::vectorSub<<<sm, WARPS*32, 0, streams[i]>>>( &d_a[offset], &d_b[offset], &d_c[offset], realsize);
+        // Retrieve data on stream
+        cudaCheck( cudaMemcpyAsync(&c[offset], &d_c[offset], realsize*sizeof(int), cudaMemcpyDeviceToHost, streams[i]) );
+    }
+    cudaDeviceSynchronize();
     multiCudaFree(d_a, d_b, d_c);
 }
 
 void cudamath::vectorInSub(int *a, int *b, int n)
 {
-    // Host memory -> Device memory
+    // Allocate device memory
     int *d_a, *d_b;
     multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b);
-    cudaCheck( cudaMemcpy(d_a, a, n*sizeof(int), cudaMemcpyHostToDevice) );
-    cudaCheck( cudaMemcpy(d_b, b, n*sizeof(int), cudaMemcpyHostToDevice) );
-    // Run kernel
-    int sm; cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
-    kernels::vectorInSub<<<sm, WARPS*32>>>(d_a, d_b, n);
-    // Device memory -> Host memory
-    cudaCheck( cudaMemcpy(a, d_a, n*sizeof(int), cudaMemcpyDeviceToHost) );
+    // Clip streams for small inputs
+    int realStreams = STREAMS<=n ? STREAMS : 1;
+    // Create stream array
+    cudaStream_t *streams = new cudaStream_t[realStreams];
+    int streamLength = (n + (n%realStreams)) / realStreams;
+    // For each stream
+    for (int i=0; i < realStreams; ++i)
+    {
+        int offset = i*streamLength;
+        int realsize = offset+streamLength>n ? n%streamLength : streamLength;
+        cudaCheck( cudaStreamCreate(&streams[i]) );
+        // Send data on stream
+        cudaCheck( cudaMemcpyAsync(&d_a[offset], &a[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
+        cudaCheck( cudaMemcpyAsync(&d_b[offset], &b[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
+        // Run kernel on stream
+        kernels::vectorInSub<<<sm, WARPS*32, 0, streams[i]>>>( &d_a[offset], &d_b[offset], realsize);
+        // Retrieve data on stream
+        cudaCheck( cudaMemcpyAsync(&a[offset], &d_a[offset], realsize*sizeof(int), cudaMemcpyDeviceToHost, streams[i]) );
+    }
+    cudaDeviceSynchronize();
     multiCudaFree(d_a, d_b);
 }
 
@@ -76,7 +137,7 @@ void cudamath::vectorInSub(int *a, int *b, int n)
 inline void cudaCheck(cudaError_t err)
 {
     if (err != cudaSuccess)
-        std::cout << "Cuda error: " << cudaGetErrorString(err);
+        std::cout << "Cuda error: " << cudaGetErrorString(err) << std::endl;
 }
 
 inline void multiCudaMalloc(int size, void **a, void **b, void **c)

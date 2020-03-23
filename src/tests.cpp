@@ -59,26 +59,27 @@ void testVectorInSub(int *a, int *b, int TESTS, int N, int *ms)
 
 void testOutputs()
 {
-    int a[] = {1, 2, 3};
-    int b[] = {1, 1, 1};
-    int c[] = {0, 0, 0};
+    int size = 6;
+    int a[] = {1, 2, 3, 4, 5, 6};
+    int b[] = {1, 1, 1, 1, 1, 1};
+    int c[] = {0, 0, 0, 0, 0, 0};
 
-    std::cout << "a:           " << a[0] << a[1] << a[2] << std::endl;
-    std::cout << "b:           " << b[0] << b[1] << b[2] << std::endl;
+    std::cout << "a:           " << a[0] << a[1] << a[2] << a[3] << a[4] << std::endl;
+    std::cout << "b:           " << b[0] << b[1] << b[2] << b[3] << b[4] << std::endl;
     
-    cudamath::vectorAdd(a, b, c, 3);
-    std::cout << "vectorAdd:   " << c[0] << c[1] << c[2] << std::endl;
+    cudamath::vectorAdd(a, b, c, size);
+    std::cout << "vectorAdd:   " << c[0] << c[1] << c[2] << c[3] << c[4] << std::endl;
 
-    cudamath::vectorInAdd(a, b, 3);
-    std::cout << "vectorInAdd: " << a[0] << a[1] << a[2] << std::endl;
-    a[0]=1, a[1]=2, a[2]=3; // Reset a
+    cudamath::vectorInAdd(a, b, size);
+    std::cout << "vectorInAdd: " << a[0] << a[1] << a[2] << a[3] << a[4] << std::endl;
+    a[0]=1, a[1]=2, a[2]=3, a[3]=4, a[4]=5; // Reset a
 
-    cudamath::vectorSub(a, b, c, 3);
-    std::cout << "vectorSub:   " << c[0] << c[1] << c[2] << std::endl;
+    cudamath::vectorSub(a, b, c, size);
+    std::cout << "vectorSub:   " << c[0] << c[1] << c[2] << c[3] << c[4] << std::endl;
 
-    cudamath::vectorInSub(a, b, 3);
-    std::cout << "vectorInSub: " << a[0] << a[1] << a[2] << std::endl;
-    a[0]=1, a[1]=2, a[2]=3; // Reset a
+    cudamath::vectorInSub(a, b, size);
+    std::cout << "vectorInSub: " << a[0] << a[1] << a[2] << a[3] << a[4] << std::endl;
+    a[0]=1, a[1]=2, a[2]=3, a[3]=4, a[4]=5; // Reset a
 }
 
 void populate(int *array_a, int *array_b, int n)

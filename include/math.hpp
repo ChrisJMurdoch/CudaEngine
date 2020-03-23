@@ -5,6 +5,10 @@
 
 namespace cudamath
 {
+    /** Initialise device data */
+    void initDevice();
+    extern int sm;
+
     /** Function for adding two arrays together on the GPU */
     void vectorAdd(int *a, int *b, int *c, int n);
 

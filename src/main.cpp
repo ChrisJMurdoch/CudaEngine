@@ -24,8 +24,11 @@ int main(int argc, char *argv[])
     // Display config
     std::cout << "Config: " << TESTS << " tests, 10^" << power << " vector size." << std::endl;
 
+    // Initialise device
+    cudamath::initDevice();
+
 #if DEBUG_OUTPUT
-    testOutputs(WARPS);
+    testOutputs();
 #endif
     
     // Allocate host memory

@@ -59,10 +59,10 @@ void testVectorInSub(int *a, int *b, int TESTS, int N, int *ms)
 
 void testOutputs()
 {
-    int size = 6;
-    int a[] = {1, 2, 3, 4, 5, 6};
-    int b[] = {1, 1, 1, 1, 1, 1};
-    int c[] = {0, 0, 0, 0, 0, 0};
+    int size = 5;
+    int a[] = {1, 2, 3, 4, 5};
+    int b[] = {1, 1, 1, 1, 1};
+    int c[] = {0, 0, 0, 0, 0};
 
     std::cout << "a:           " << a[0] << a[1] << a[2] << a[3] << a[4] << std::endl;
     std::cout << "b:           " << b[0] << b[1] << b[2] << b[3] << b[4] << std::endl;

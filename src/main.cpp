@@ -53,9 +53,9 @@ int main(int argc, char *argv[])
 
     // Cleanup
 #if PINNED_MEMORY
-    cudaFreeHost(a);
-    cudaFreeHost(b);
-    cudaFreeHost(c);
+    cudaCheck( cudaFreeHost(a) );
+    cudaCheck( cudaFreeHost(b) );
+    cudaCheck( cudaFreeHost(c) );
 #else
     delete[] a;
     delete[] b;

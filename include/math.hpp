@@ -20,6 +20,9 @@ namespace cudamath
 
     /** Function for subtracting one vector from another in-place on the GPU */
     void vectorInSub(int *a, int *b, int n);
+
+    /** Transposes a matrix, monolithic */
+    void transpose(int *in, int *out, int height, int width);
 }
 
 /** Inline error checking function for cuda calls. */

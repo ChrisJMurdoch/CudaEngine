@@ -132,6 +132,17 @@ void cudamath::vectorInSub(int *a, int *b, int n)
     multiCudaFree(d_a, d_b);
 }
 
+void cudamath::transpose(int *in, int *out, int height, int width)
+{
+    // Allocate device memory
+    int *d_in, *d_out;
+    multiCudaMalloc(height*width*sizeof(int), (void **)&d_in, (void **)&d_out);
+    cudaCheck( cudaMemcpy(d_in, in, height*width*sizeof(int), cudaMemcpyHostToDevice) );
+    kernels::transpose<<<1, height*width>>>(d_in, d_out, height, width);
+    cudaCheck( cudaMemcpy(out, d_out, height*width*sizeof(int), cudaMemcpyDeviceToHost) );
+    multiCudaFree(d_in, d_out);
+}
+
 // MACROS
 
 inline void cudaCheck(cudaError_t err)

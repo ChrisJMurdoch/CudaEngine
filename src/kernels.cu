@@ -32,4 +32,10 @@ namespace kernels
         for (int i=index; i<n; i += blockDim.x*gridDim.x)
             a[i] = a[i] - b[i];
     }
+
+    __global__
+    void transpose(int *in, int *out, int height, int width)
+    {
+        out[threadIdx.x] = in[ (threadIdx.x*width) % (height*width) + ((threadIdx.x)/height) ];
+    }
 }

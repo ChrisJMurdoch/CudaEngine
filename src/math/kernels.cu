@@ -1,4 +1,6 @@
 
+// Directly included in math.cu to avoid loss of device code optimisation
+
 namespace kernels
 {
     __global__

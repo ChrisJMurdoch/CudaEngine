@@ -1,16 +1,16 @@
 
 #include <iostream>
 
-#include "..\include\math.hpp"
+#include "..\..\include\math\math.hpp"
 
-#include ".\kernels.cu"
+#include "kernels.cu"
 
-#define WARPS 16
+#define WARPS 8
 #define STREAMS 8
 
 // DEVICE SETUP
 
-int cudamath::sm;
+int cudamath::sm = 10; // Default to GTX1060 #SMs
 void cudamath::initDevice()
 {
     cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );

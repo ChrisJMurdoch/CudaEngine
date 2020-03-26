@@ -1,45 +1,62 @@
 
-#include<iostream>
+#define GLFW_DLL
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
-#include "..\..\include\graphic\main.hpp"
-#include "..\..\include\math\math.hpp"
+#include <iostream>
+#include <stdexcept>
+#include <cstdlib>
 
-#define PINNED_MEMORY true
+const int WIDTH = 800;
+const int HEIGHT = 600;
 
-int main(int argc, char *argv[])
-{
+class HelloTriangleApplication {
+public:
+    void run() {
+        initWindow();
+        initVulkan();
+        mainLoop();
+        cleanup();
+    }
 
-    // Initialise math engine
-    cudamath::initDevice();
+private:
+    GLFWwindow* window;
 
-    // Test variables
-    int N = 10;
+    void initWindow() {
+        glfwInit();
 
-    // Allocate
-#if PINNED_MEMORY
-    int *a; cudaCheck( cudaMallocHost((void**)&a, N*sizeof(int)) );
-    int *b; cudaCheck( cudaMallocHost((void**)&b, N*sizeof(int)) );
-    int *c; cudaCheck( cudaMallocHost((void**)&c, N*sizeof(int)) );
-#else
-    int *a = new int[N];
-    int *b = new int[N];
-    int *c = new int[N];
-#endif
-    
-    // Run
-    cudamath::vectorAdd(a, b, c, N);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    // Cleanup
-#if PINNED_MEMORY
-    cudaCheck( cudaFreeHost(a) );
-    cudaCheck( cudaFreeHost(b) );
-    cudaCheck( cudaFreeHost(c) );
-#else
-    delete[] a;
-    delete[] b;
-    delete[] c;
-#endif
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+    }
 
-    std::cout << "Exiting.";
-    return 0;
+    void initVulkan() {
+
+    }
+
+    void mainLoop() {
+        while (!glfwWindowShouldClose(window)) {
+            glfwPollEvents();
+        }
+    }
+
+    void cleanup() {
+        glfwDestroyWindow(window);
+
+        glfwTerminate();
+    }
+};
+
+int main() {
+    HelloTriangleApplication app;
+
+    try {
+        app.run();
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }

@@ -9,8 +9,8 @@
 
 #include "..\..\include\logger\log.hpp"
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
+#define WIDTH 1000
+#define HEIGHT 600
 
 class VulkanApp {
 public:
@@ -72,9 +72,9 @@ private:
         createInfo.enabledLayerCount = 0;
 
         uint32_t extensionCount = 0;
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+        Log::check( vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr), "vkEnumerateInstanceExtensionProperties" );
         std::vector<VkExtensionProperties> extensions(extensionCount);
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+        Log::check( vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()), "vkEnumerateInstanceExtensionProperties" );
         Log::print( Log::debug, "Available extensions:");
         for (const auto& extension : extensions)
             Log::print( Log::debug, extension.extensionName);

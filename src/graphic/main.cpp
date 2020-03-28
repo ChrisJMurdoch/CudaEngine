@@ -2,19 +2,24 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-#include <cstdlib>
+#include <cstring>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include "..\..\include\logger\log.hpp"
 
-#define WIDTH 1000
+#define USE_VAL_LAYERS true
+#define WIDTH 800
 #define HEIGHT 600
 
-class VulkanApp {
+const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+
+class VulkanApp
+{
 public:
-    void run() {
+    void run()
+    {
         initWindow();
         initVulkan();
         mainLoop();
@@ -22,76 +27,78 @@ public:
     }
 
 private:
-    GLFWwindow* window;
+    GLFWwindow *window;
     VkInstance instance;
 
-    void initWindow() {
+    void initWindow()
+    {
         glfwInit();
-
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
     }
 
-    void initVulkan() {
+    void initVulkan()
+    {
         createInstance();
     }
 
-    void mainLoop() {
-        while (!glfwWindowShouldClose(window)) {
+    void mainLoop()
+    {
+        while (!glfwWindowShouldClose(window))
+        {
             glfwPollEvents();
         }
     }
 
-    void cleanup() {
+    void cleanup()
+    {
         vkDestroyInstance(instance, nullptr);
-
         glfwDestroyWindow(window);
-
         glfwTerminate();
     }
 
-    void createInstance() {
-        VkApplicationInfo appInfo = {};
-        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "Vulkan App";
-        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.pEngineName = "No Engine";
-        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_0;
-
+    void createInstance()
+    {
         VkInstanceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        createInfo.pApplicationInfo = &appInfo;
 
         uint32_t glfwExtensionCount = 0;
         createInfo.ppEnabledExtensionNames = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
         createInfo.enabledExtensionCount = glfwExtensionCount;
 
+#ifndef NDEBUG
         createInfo.enabledLayerCount = 0;
-
-        uint32_t extensionCount = 0;
-        Log::check( vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr), "vkEnumerateInstanceExtensionProperties" );
-        std::vector<VkExtensionProperties> extensions(extensionCount);
-        Log::check( vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()), "vkEnumerateInstanceExtensionProperties" );
-        Log::print( Log::debug, "Available extensions:");
-        for (const auto& extension : extensions)
-            Log::print( Log::debug, extension.extensionName);
+#else
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.ppEnabledLayerNames = validationLayers.data();
+#endif
 
         Log::check( vkCreateInstance(&createInfo, nullptr, &instance), "vkCreateInstance" );
     }
 };
 
-int main() {
+int main(int argc, char *argv[])
+{
     VulkanApp app;
 
-    try {
+#ifdef NDEBUG
+    Log::print(Log::message, "Release mode.");
+    Log::set(Log::error);
+#else
+    Log::print(Log::message, "Debug mode.");
+    Log::set(Log::message);
+#endif
+
+    try
+    {
         app.run();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
+    }
+    catch (const std::exception &e)
+    {
+        Log::print(Log::error, e.what());
+        return 1;
     }
 
-    return EXIT_SUCCESS;
+    return 0;
 }

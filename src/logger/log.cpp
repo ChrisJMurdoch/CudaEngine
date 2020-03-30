@@ -11,11 +11,19 @@ void Log::set(Level lvl)
     level = lvl;
 }
 
-void Log::print(Level lvl, const char *message)
+template <class T>
+void Log::print(Level lvl, T message, bool newline)
 {
     if (lvl >= level)
-        std::cout << message << std::endl;
+    {
+        std::cout << message;
+        if (newline)
+            std::cout << std::endl;
+    }
 }
+template void Log::print(Level, char *, bool);
+template void Log::print(Level, std::string, bool);
+template void Log::print(Level, const char *, bool);
 
 void Log::check(int result, const char *op)
 {

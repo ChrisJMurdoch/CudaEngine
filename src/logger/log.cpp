@@ -21,6 +21,7 @@ void Log::print(Level lvl, T message, bool newline)
             std::cout << std::endl;
     }
 }
+template void Log::print(Level, int, bool);
 template void Log::print(Level, char *, bool);
 template void Log::print(Level, std::string, bool);
 template void Log::print(Level, const char *, bool);

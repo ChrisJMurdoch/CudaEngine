@@ -1,15 +1,14 @@
 
+#include <vector>
 #include <iostream>
 #include <stdexcept>
-#include <vector>
-#include <cstring>
+#include <string>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include "..\..\include\logger\log.hpp"
 
-#define USE_VAL_LAYERS true
 #define WIDTH 800
 #define HEIGHT 600
 
@@ -29,6 +28,7 @@ public:
 private:
     GLFWwindow *window;
     VkInstance instance;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
     void initWindow()
     {
@@ -41,6 +41,7 @@ private:
     void initVulkan()
     {
         createInstance();
+        pickPhysicalDevice();
     }
 
     void mainLoop()
@@ -74,7 +75,64 @@ private:
         createInfo.ppEnabledLayerNames = validationLayers.data();
 #endif
 
-        Log::check( vkCreateInstance(&createInfo, nullptr, &instance), "vkCreateInstance" );
+        Log::check(vkCreateInstance(&createInfo, nullptr, &instance), "vkCreateInstance");
+    }
+
+    void pickPhysicalDevice()
+    {
+        // Get devices
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+        if (deviceCount == 0)
+            throw std::runtime_error("No GPU found");
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+        // Choose
+        int highestRating = 0;
+        for (const auto& device : devices) {
+            int rating = rateDevice(device);
+            if (rating > highestRating) {
+                physicalDevice = device;
+                highestRating = rating;
+                break;
+            }
+        }
+
+        // Validate
+        if (physicalDevice == VK_NULL_HANDLE)
+            throw std::runtime_error("No Vulkan GPU found");
+    }
+
+    int rateDevice(VkPhysicalDevice device)
+    {
+        // Get specification
+        VkPhysicalDeviceProperties deviceProperties;
+        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+        VkPhysicalDeviceFeatures deviceFeatures;
+        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+        // Log
+        Log::print(Log::message, deviceProperties.deviceName, Log::NO_NEWLINE);
+
+        // Rate device type
+        int rating = 0;
+        switch(deviceProperties.deviceType)
+        {
+            case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                rating += 3;
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                rating += 2;
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+            case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                rating += 1;
+                break;
+        }
+
+        Log::print( Log::message, " Rating: " + std::to_string(rating) );
+        return rating;
     }
 };
 
@@ -83,11 +141,11 @@ int main(int argc, char *argv[])
     VulkanApp app;
 
 #ifdef NDEBUG
-    Log::print(Log::message, "Release mode.");
     Log::set(Log::error);
+    Log::print(Log::force, "Release mode.");
 #else
-    Log::print(Log::message, "Debug mode.");
     Log::set(Log::message);
+    Log::print(Log::force, "Debug mode.");
 #endif
 
     try
@@ -100,5 +158,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    Log::print(Log::force, "Execution complete.", Log::NO_NEWLINE);
     return 0;
 }

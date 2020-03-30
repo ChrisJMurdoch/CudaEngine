@@ -7,7 +7,7 @@ class Log
 public:
     static const bool NEWLINE = true;
     static const bool NO_NEWLINE = false;
-    enum Level { debug=0, message=1, warning=2, error=3 };
+    enum Level { debug=0, message=1, warning=2, error=3, force=4 };
 
     static void set(Level lvl);
 

@@ -1,163 +1,119 @@
 
-#include <vector>
-#include <iostream>
-#include <stdexcept>
-#include <string>
+// Include standard headers
+#include <stdio.h>
+#include <stdlib.h>
 
-#define GLFW_INCLUDE_VULKAN
+// Include GLEW
+#include <GL/glew.h>
+
+// Include GLFW
 #include <GLFW/glfw3.h>
+GLFWwindow* window;
 
-#include "..\..\include\logger\log.hpp"
+#include "..\..\include\graphic\loadShader.hpp"
 
-#define WIDTH 800
-#define HEIGHT 600
+// Mostly triangle tutorial code for now, from http://www.opengl-tutorial.org
 
-const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-
-class VulkanApp
+int main( void )
 {
-public:
-    void run()
-    {
-        initWindow();
-        initVulkan();
-        mainLoop();
-        cleanup();
-    }
+	// Initialise GLFW
+	if( !glfwInit() )
+	{
+		fprintf( stderr, "Failed to initialize GLFW\n" );
+		getchar();
+		return -1;
+	}
 
-private:
-    GLFWwindow *window;
-    VkInstance instance;
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+	glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    void initWindow()
-    {
-        glfwInit();
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-    }
+	// Open a window and create its OpenGL context
+	window = glfwCreateWindow( 1024, 768, "CudaEngine", NULL, NULL);
+	if( window == NULL ){
+		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible.\n" );
+		getchar();
+		glfwTerminate();
+		return -1;
+	}
+	glfwMakeContextCurrent(window);
 
-    void initVulkan()
-    {
-        createInstance();
-        pickPhysicalDevice();
-    }
+	// Initialize GLEW
+	glewExperimental = true; // Needed for core profile
+	if (glewInit() != GLEW_OK) {
+		fprintf(stderr, "Failed to initialize GLEW\n");
+		getchar();
+		glfwTerminate();
+		return -1;
+	}
 
-    void mainLoop()
-    {
-        while (!glfwWindowShouldClose(window))
-        {
-            glfwPollEvents();
-        }
-    }
+	// Capture the escape key being pressed below
+	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-    void cleanup()
-    {
-        vkDestroyInstance(instance, nullptr);
-        glfwDestroyWindow(window);
-        glfwTerminate();
-    }
+	// Dark blue background
+	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
-    void createInstance()
-    {
-        VkInstanceCreateInfo createInfo = {};
-        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	GLuint VertexArrayID;
+	glGenVertexArrays(1, &VertexArrayID);
+	glBindVertexArray(VertexArrayID);
 
-        uint32_t glfwExtensionCount = 0;
-        createInfo.ppEnabledExtensionNames = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-        createInfo.enabledExtensionCount = glfwExtensionCount;
+	// Create and compile GLSL program from the shaders
+	GLuint programID = LoadShaders( "shaders\\SimpleVertexShader.vert", "shaders\\SimpleFragmentShader.frag" );
+	if ( programID == 0 ) return 1;
 
-#ifndef NDEBUG
-        createInfo.enabledLayerCount = 0;
-#else
-        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-        createInfo.ppEnabledLayerNames = validationLayers.data();
-#endif
 
-        Log::check(vkCreateInstance(&createInfo, nullptr, &instance), "vkCreateInstance");
-    }
+	static const GLfloat g_vertex_buffer_data[] = { 
+		-1.0f, -1.0f, 0.0f,
+		 1.0f, -1.0f, 0.0f,
+		 0.0f,  1.0f, 0.0f,
+	};
 
-    void pickPhysicalDevice()
-    {
-        // Get devices
-        uint32_t deviceCount = 0;
-        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-        if (deviceCount == 0)
-            throw std::runtime_error("No GPU found");
-        std::vector<VkPhysicalDevice> devices(deviceCount);
-        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+	GLuint vertexbuffer;
+	glGenBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
-        // Choose
-        int highestRating = 0;
-        for (const auto& device : devices) {
-            int rating = rateDevice(device);
-            if (rating > highestRating) {
-                physicalDevice = device;
-                highestRating = rating;
-                break;
-            }
-        }
+	do{
 
-        // Validate
-        if (physicalDevice == VK_NULL_HANDLE)
-            throw std::runtime_error("No Vulkan GPU found");
-    }
+		// Clear the screen
+		glClear( GL_COLOR_BUFFER_BIT );
 
-    int rateDevice(VkPhysicalDevice device)
-    {
-        // Get specification
-        VkPhysicalDeviceProperties deviceProperties;
-        vkGetPhysicalDeviceProperties(device, &deviceProperties);
-        VkPhysicalDeviceFeatures deviceFeatures;
-        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+		// Use our shader
+		glUseProgram(programID);
 
-        // Log
-        Log::print(Log::message, deviceProperties.deviceName, Log::NO_NEWLINE);
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
 
-        // Rate device type
-        int rating = 0;
-        switch(deviceProperties.deviceType)
-        {
-            case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-                rating += 3;
-                break;
-            case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-                rating += 2;
-                break;
-            case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-            case VK_PHYSICAL_DEVICE_TYPE_CPU:
-                rating += 1;
-                break;
-        }
+		// Draw the triangle
+		glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
 
-        Log::print( Log::message, " Rating: " + std::to_string(rating) );
-        return rating;
-    }
-};
+		glDisableVertexAttribArray(0);
 
-int main(int argc, char *argv[])
-{
-    VulkanApp app;
+		// Swap buffers
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 
-#ifdef NDEBUG
-    Log::set(Log::error);
-    Log::print(Log::force, "Release mode.");
-#else
-    Log::set(Log::message);
-    Log::print(Log::force, "Debug mode.");
-#endif
+	} // Check if the ESC key was pressed or the window was closed
+	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
+		   glfwWindowShouldClose(window) == 0 );
 
-    try
-    {
-        app.run();
-    }
-    catch (const std::exception &e)
-    {
-        Log::print(Log::error, e.what());
-        return 1;
-    }
+	// Cleanup VBO
+	glDeleteBuffers(1, &vertexbuffer);
+	glDeleteVertexArrays(1, &VertexArrayID);
+	glDeleteProgram(programID);
 
-    Log::print(Log::force, "Execution complete.", Log::NO_NEWLINE);
-    return 0;
+	// Close OpenGL window and terminate GLFW
+	glfwTerminate();
+
+	return 0;
 }

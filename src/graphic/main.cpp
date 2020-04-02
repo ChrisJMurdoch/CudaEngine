@@ -1,5 +1,9 @@
 
-// Include standard headers
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,7 +14,7 @@
 #include <GLFW/glfw3.h>
 GLFWwindow* window;
 
-#include "..\..\include\graphic\loadShader.hpp"
+#include "..\..\include\graphic\main.hpp"
 
 // Mostly triangle tutorial code for now, from http://www.opengl-tutorial.org
 
@@ -116,4 +120,65 @@ int main( void )
 	glfwTerminate();
 
 	return 0;
+}
+
+GLuint LoadShaders(const char *vertFilePath,const char *fragFilePath)
+{
+	// Create shaders
+	GLuint vertShaderID = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fragShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+
+	// Read the Shaders
+	std::string vertShaderCode, fragShaderCode;
+	std::ifstream vertShaderStream(vertFilePath, std::ios::in);
+	std::ifstream fragShaderStream(fragFilePath, std::ios::in);
+
+	std::stringstream vsstr, fsstr;
+	vsstr << vertShaderStream.rdbuf();
+	fsstr << fragShaderStream.rdbuf();
+	vertShaderCode = vsstr.str();
+	fragShaderCode = fsstr.str();
+	vertShaderStream.close();
+	fragShaderStream.close();
+
+	// Compile Shaders
+	char const *vertSourcePointer = vertShaderCode.c_str();
+	char const *fragSourcePointer = fragShaderCode.c_str();
+	glShaderSource(vertShaderID, 1, &vertSourcePointer , NULL);
+	glShaderSource(fragShaderID, 1, &fragSourcePointer , NULL);
+	glCompileShader(vertShaderID);
+	glCompileShader(fragShaderID);
+
+	// Check compilation
+	GLint vertSucc=GL_FALSE, fragSucc=GL_FALSE;
+	glGetShaderiv(vertShaderID, GL_COMPILE_STATUS, &vertSucc);
+	glGetShaderiv(fragShaderID, GL_COMPILE_STATUS, &fragSucc);
+	if (!vertSucc || !fragSucc)
+	{
+		std::cout << "Shader compilation error." << std::endl;
+		return 0;
+	}
+
+	// Link the program
+	GLuint programID = glCreateProgram();
+	glAttachShader(programID, vertShaderID);
+	glAttachShader(programID, fragShaderID);
+	glLinkProgram(programID);
+
+	// Check linking
+	GLint progSucc=GL_FALSE;
+	glGetProgramiv(programID, GL_LINK_STATUS, &progSucc);
+	if (!progSucc)
+	{
+		std::cout << "Shader linking error." << std::endl;
+		return 0;
+	}
+	
+	// Delete shader objects
+	glDetachShader(programID, vertShaderID);
+	glDetachShader(programID, fragShaderID);
+	glDeleteShader(vertShaderID);
+	glDeleteShader(fragShaderID);
+
+	return programID;
 }

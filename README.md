@@ -7,6 +7,6 @@ C++ hardware-accelerated graphic and math engine using **Nvidia Cuda**.
 
 This engine requires a **NVIDIA GPU** and has only been tested on **Windows 10**.
 
-**GLFW** and **GLEW** are required to run this engine.
+**GLFW** is required to run this engine.
 
 The **NVCC** Compiler is needed to compile the .cu kernel files.

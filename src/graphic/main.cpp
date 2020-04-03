@@ -5,7 +5,6 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-GLFWwindow* window;
 
 #include "..\..\include\graphic\main.hpp"
 #include "..\..\include\logger\log.hpp"
@@ -29,7 +28,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	// Create window
-	window = glfwCreateWindow( VIEW_WIDTH, VIEW_HEIGHT, "CudaEngine", NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow( VIEW_WIDTH, VIEW_HEIGHT, "CudaEngine", NULL, NULL);
 	if (window == NULL)
 	{
 		Log::print(Log::error, "GLFW window creation error.");
@@ -46,70 +45,78 @@ int main()
 		return -1;
 	}
 
-	// Set bounds
+	// Set viewport and configure resize callback
 	glViewport(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
-	// Allow resize to window
 	glfwSetFramebufferSizeCallback(window, resizeCallback);
 
 	// Setup key press mode
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-	/*
+
+	// Set background
+	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+
 	// Create and compile GLSL program from the shaders
 	GLuint programID = LoadShaders( "shaders\\SimpleVertexShader.vert", "shaders\\SimpleFragmentShader.frag" );
-	if ( programID == 0 ) return 1;
+	if (programID == 0)
+	{
+		Log::print(Log::error, "Shader loading error.");
+		glfwTerminate();
+		return -1;
+	}
 
-	// DRAW
+	// Create triangle coords
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		0.0f,  0.5f, 0.0f
+	};  
+
+	// Create buffer and array objects
+	GLuint VAO, VBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+
+	// Bind objects
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	// Copy over buffer data
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// Give OpenGL vertex buffer format
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// Unbind buffer and array
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 	
-	*/
-	// Dark blue background
-	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
-	/*
-	GLuint VertexArrayID;
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
-
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-
-	static const GLfloat g_vertex_buffer_data[] = { 
-		-1.0f, -1.0f, 0.0f,
-		 1.0f, -1.0f, 0.0f,
-		 0.0f,  1.0f, 0.0f,
-	};
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-	*/
 	while( !glfwWindowShouldClose(window) )
 	{
 		// Get key presses
 		processInput(window);
 
 		// Clear screen
-		glClear( GL_COLOR_BUFFER_BIT );
+		glClear(GL_COLOR_BUFFER_BIT);
 
-		/*
 		// Use program shaders
 		glUseProgram(programID);
 
-		// 1st attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0 );
+		// Use VAO
+		glBindVertexArray(VAO);
 
 		// Draw the triangle
-		glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
-
-		glDisableVertexAttribArray(0);*/
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 		// Check inputs and display
-		glfwPollEvents();
 		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
 	// Cleanup
-	/*glDeleteBuffers(1, &vertexbuffer);
-	glDeleteVertexArrays(1, &VertexArrayID);
-	glDeleteProgram(programID);*/
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteProgram(programID);
 
 	glfwTerminate();
 
@@ -127,17 +134,16 @@ void resizeCallback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-GLuint LoadShaders(const char *vertFilePath,const char *fragFilePath)
+GLuint LoadShaders(const char *vertFilePath, const char *fragFilePath)
 {
 	// Create shaders
 	GLuint vertShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
-	// Read the Shaders
+	// Read the Shader files
 	std::string vertShaderCode, fragShaderCode;
 	std::ifstream vertShaderStream(vertFilePath, std::ios::in);
 	std::ifstream fragShaderStream(fragFilePath, std::ios::in);
-
 	std::stringstream vsstr, fsstr;
 	vsstr << vertShaderStream.rdbuf();
 	fsstr << fragShaderStream.rdbuf();
@@ -145,10 +151,10 @@ GLuint LoadShaders(const char *vertFilePath,const char *fragFilePath)
 	fragShaderCode = fsstr.str();
 	vertShaderStream.close();
 	fragShaderStream.close();
+	const char *vertSourcePointer = vertShaderCode.c_str();
+	const char *fragSourcePointer = fragShaderCode.c_str();
 
 	// Compile Shaders
-	char const *vertSourcePointer = vertShaderCode.c_str();
-	char const *fragSourcePointer = fragShaderCode.c_str();
 	glShaderSource(vertShaderID, 1, &vertSourcePointer , NULL);
 	glShaderSource(fragShaderID, 1, &fragSourcePointer , NULL);
 	glCompileShader(vertShaderID);

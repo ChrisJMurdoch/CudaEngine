@@ -38,9 +38,18 @@ GLuint LoadShaders(const char *vertFilePath, const char *fragFilePath)
 	GLint vertSucc=GL_FALSE, fragSucc=GL_FALSE;
 	glGetShaderiv(vertShaderID, GL_COMPILE_STATUS, &vertSucc);
 	glGetShaderiv(fragShaderID, GL_COMPILE_STATUS, &fragSucc);
-	if (!vertSucc || !fragSucc)
+	if (!vertSucc)
 	{
-		Log::print(Log::error, "Shader compilation error.");
+        char infoLog[512];
+        glGetShaderInfoLog(vertShaderID, 512, NULL, infoLog);
+		Log::print(Log::error, infoLog);
+		return 0;
+	}
+    if (!fragSucc)
+	{
+        char infoLog[512];
+        glGetShaderInfoLog(fragShaderID, 512, NULL, infoLog);
+		Log::print(Log::error, infoLog);
 		return 0;
 	}
 
@@ -55,7 +64,9 @@ GLuint LoadShaders(const char *vertFilePath, const char *fragFilePath)
 	glGetProgramiv(programID, GL_LINK_STATUS, &progSucc);
 	if (!progSucc)
 	{
-		Log::print(Log::error, "Shader linking error.");
+        char infoLog[512];
+        glGetProgramInfoLog(programID, 512, NULL, infoLog);
+		Log::print(Log::error, infoLog);
 		return 0;
 	}
 	

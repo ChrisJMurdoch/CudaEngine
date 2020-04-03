@@ -1,12 +1,9 @@
 
-#include <string>
-#include <fstream>
-#include <sstream>
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "..\..\include\graphic\main.hpp"
+#include "..\..\include\graphic\util.hpp"
 #include "..\..\include\logger\log.hpp"
 
 #define VIEW_WIDTH 800
@@ -14,67 +11,24 @@
 
 int main()
 {
-	// Initialise GLFW
-	glfwInit();
-
-	// Supersample
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	// OpenGL Version
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	// Force modern GL
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	// Mac compatibility
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-	// Create window
-	GLFWwindow *window = glfwCreateWindow( VIEW_WIDTH, VIEW_HEIGHT, "CudaEngine", NULL, NULL);
-	if (window == NULL)
-	{
-		Log::print(Log::error, "GLFW window creation error.");
-		glfwTerminate();
+	// Initialise graphics
+	GLFWwindow *window = NULL;
+	GLuint programID;
+	if ( initialise(&window, &programID) != 0 )
 		return -1;
-	}
-	glfwMakeContextCurrent(window);
-
-	// Initialize GLAD
-	if ( !gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) )
-	{
-		Log::print(Log::error, "GLAD loading error.");
-		glfwTerminate();
-		return -1;
-	}
-
-	// Set viewport and configure resize callback
-	glViewport(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
-	glfwSetFramebufferSizeCallback(window, resizeCallback);
-
-	// Setup key press mode
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 	// Set background
 	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
-	// Create and compile GLSL program from the shaders
-	GLuint programID = LoadShaders( "shaders\\SimpleVertexShader.vert", "shaders\\SimpleFragmentShader.frag" );
-	if (programID == 0)
-	{
-		Log::print(Log::error, "Shader loading error.");
-		glfwTerminate();
-		return -1;
-	}
-
-	// Create square coords
+	// Create triangle coords and colours
 	float vertices[] = {
-		0.5f,  0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		-0.5f,  0.5f, 0.0f 
-	};
+		0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+		0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
+	}; 
 
 	unsigned int indices[] = {
-		0, 1, 3,
-		1, 2, 3
+		0, 1, 2
 	}; 
 
 	// Create buffer and array objects
@@ -92,9 +46,12 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	// Give OpenGL vertex buffer format
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	// Colour attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	// Unbind buffers and array
 	glBindVertexArray(0);
@@ -102,7 +59,7 @@ int main()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
 	// Use wireframe mode
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while( !glfwWindowShouldClose(window) )
 	{
@@ -132,6 +89,7 @@ int main()
 	// Cleanup
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 	glDeleteProgram(programID);
 
 	glfwTerminate();
@@ -139,10 +97,71 @@ int main()
 	return 0;
 }
 
-void processInput(GLFWwindow *window)
+int initialise(GLFWwindow **window, GLuint *programPtr)
 {
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+	// Create window
+	if ( createWindow(window) != 0 )
+	{
+		Log::print(Log::error, "Window creation error.");
+		glfwTerminate();
+		return -1;
+	}
+
+	// Initialise GLAD
+	if ( initGLAD(*window) != 0 )
+	{
+		Log::print(Log::error, "GLAD initialising error.");
+		glfwTerminate();
+		return -1;
+	}
+
+	// Load shaders
+	*programPtr = LoadShaders( "shaders\\SimpleVertexShader.vert", "shaders\\SimpleFragmentShader.frag" );
+	if (*programPtr == 0)
+	{
+		Log::print(Log::error, "Shader loading error.");
+		glfwTerminate();
+		return -1;
+	}
+
+	return 0;
+}
+
+int createWindow(GLFWwindow **window)
+{
+	// Initialise GLFW
+	glfwInit();
+
+	// Window settings
+	glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+	// Create window
+	*window = glfwCreateWindow( VIEW_WIDTH, VIEW_HEIGHT, "CudaEngine", NULL, NULL);
+	if (*window == NULL)
+		return -1;
+	glfwMakeContextCurrent(*window);
+
+	// Setup key press mode
+	glfwSetInputMode(*window, GLFW_STICKY_KEYS, GL_TRUE);
+	
+	return 0;
+}
+
+int initGLAD(GLFWwindow *window)
+{
+	// Load GLAD
+	if ( !gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) )
+		return -1;
+
+	// Set viewport to full window and configure resize callback
+	glViewport(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+	glfwSetFramebufferSizeCallback(window, resizeCallback);
+
+	return 0;
 }
 
 void resizeCallback(GLFWwindow *window, int width, int height)
@@ -150,62 +169,8 @@ void resizeCallback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-GLuint LoadShaders(const char *vertFilePath, const char *fragFilePath)
+void processInput(GLFWwindow *window)
 {
-	// Create shaders
-	GLuint vertShaderID = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-
-	// Read the Shader files
-	std::string vertShaderCode, fragShaderCode;
-	std::ifstream vertShaderStream(vertFilePath, std::ios::in);
-	std::ifstream fragShaderStream(fragFilePath, std::ios::in);
-	std::stringstream vsstr, fsstr;
-	vsstr << vertShaderStream.rdbuf();
-	fsstr << fragShaderStream.rdbuf();
-	vertShaderCode = vsstr.str();
-	fragShaderCode = fsstr.str();
-	vertShaderStream.close();
-	fragShaderStream.close();
-	const char *vertSourcePointer = vertShaderCode.c_str();
-	const char *fragSourcePointer = fragShaderCode.c_str();
-
-	// Compile Shaders
-	glShaderSource(vertShaderID, 1, &vertSourcePointer , NULL);
-	glShaderSource(fragShaderID, 1, &fragSourcePointer , NULL);
-	glCompileShader(vertShaderID);
-	glCompileShader(fragShaderID);
-
-	// Check compilation
-	GLint vertSucc=GL_FALSE, fragSucc=GL_FALSE;
-	glGetShaderiv(vertShaderID, GL_COMPILE_STATUS, &vertSucc);
-	glGetShaderiv(fragShaderID, GL_COMPILE_STATUS, &fragSucc);
-	if (!vertSucc || !fragSucc)
-	{
-		Log::print(Log::error, "Shader compilation error.");
-		return 0;
-	}
-
-	// Link the program
-	GLuint programID = glCreateProgram();
-	glAttachShader(programID, vertShaderID);
-	glAttachShader(programID, fragShaderID);
-	glLinkProgram(programID);
-
-	// Check linking
-	GLint progSucc=GL_FALSE;
-	glGetProgramiv(programID, GL_LINK_STATUS, &progSucc);
-	if (!progSucc)
-	{
-		Log::print(Log::error, "Shader linking error.");
-		return 0;
-	}
-	
-	// Delete shader objects
-	glDetachShader(programID, vertShaderID);
-	glDetachShader(programID, fragShaderID);
-	glDeleteShader(vertShaderID);
-	glDeleteShader(fragShaderID);
-
-	return programID;
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 }

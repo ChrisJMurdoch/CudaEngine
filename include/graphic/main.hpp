@@ -1,6 +1,8 @@
 
 #pragma once
 
-void processInput(GLFWwindow *window);
+int initialise(GLFWwindow **window, GLuint *programPtr);
+int createWindow(GLFWwindow **window);
+int initGLAD(GLFWwindow *window);
 void resizeCallback(GLFWwindow *window, int width, int height);
-GLuint LoadShaders(const char *vertFilePath,const char *fragFilePath);
+void processInput(GLFWwindow *window);

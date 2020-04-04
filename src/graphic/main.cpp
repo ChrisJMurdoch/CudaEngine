@@ -1,7 +1,7 @@
 
 // Image loading
 #define STB_IMAGE_IMPLEMENTATION
-#include "..\..\include\graphic\stb_image.h"
+#include <stb_image.h>
 
 // OpenGL loading
 #include <glad/glad.h>

@@ -1,2 +1,2 @@
 # GLAD vendor files
-vendor/* linguist-vendored
+vendor/** linguist-vendored

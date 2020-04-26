@@ -174,7 +174,7 @@ int initialise(GLFWwindow **window, GLuint *programPtr)
 	}
 
 	// Load shaders
-	*programPtr = LoadShaders( "shaders\\SimpleVertexShader.vert", "shaders\\SimpleFragmentShader.frag" );
+	*programPtr = LoadShaders( "shaders\\VShader.vert", "shaders\\FShader.frag" );
 	if (*programPtr == 0)
 	{
 		Log::print(Log::error, "Shader loading error.");

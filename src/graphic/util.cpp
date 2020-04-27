@@ -8,7 +8,7 @@
 #include "..\..\include\graphic\util.hpp"
 #include "..\..\include\logger\log.hpp"
 
-GLuint LoadShaders(const char *vertFilePath, const char *fragFilePath)
+GLuint loadShaders(const char *vertFilePath, const char *fragFilePath)
 {
 	// Create shaders
 	GLuint vertShaderID = glCreateShader(GL_VERTEX_SHADER);
@@ -18,11 +18,13 @@ GLuint LoadShaders(const char *vertFilePath, const char *fragFilePath)
 	std::string vertShaderCode, fragShaderCode;
 	std::ifstream vertShaderStream(vertFilePath, std::ios::in);
 	std::ifstream fragShaderStream(fragFilePath, std::ios::in);
+
 	std::stringstream vsstr, fsstr;
 	vsstr << vertShaderStream.rdbuf();
 	fsstr << fragShaderStream.rdbuf();
 	vertShaderStream.close();
 	fragShaderStream.close();
+
 	vertShaderCode = vsstr.str();
 	fragShaderCode = fsstr.str();
 	const char *vertSourcePointer = vertShaderCode.c_str();

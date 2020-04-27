@@ -1,4 +1,4 @@
 
 #pragma once
 
-GLuint LoadShaders(const char *vertFilePath,const char *fragFilePath);
+GLuint loadShaders(const char *vertFilePath,const char *fragFilePath);

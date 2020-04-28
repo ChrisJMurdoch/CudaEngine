@@ -34,21 +34,72 @@ int main()
 		return -1;
 	}
 
-	// Set background
-	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
-
-	// Create triangles
-	float vertices[] = {
-		// Position - Colour
-		0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,
-		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,
+	// Model positions
+	glm::vec3 modelPositions[] = {
+		glm::vec3( 0.0f,  0.0f,  0.0f),
+		glm::vec3( 2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3( 2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3( 1.3f, -2.0f, -2.5f),
+		glm::vec3( 1.5f,  2.0f, -2.5f),
+		glm::vec3( 1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f),
 	};
 
+	// Triangles
+	float vertices[] = {
+		// Front
+		-0.5, -0.5, -0.5,   1, 0, 0,
+		-0.5,  0.5, -0.5,   1, 0, 0,
+		 0.5,  0.5, -0.5,   1, 0, 0,
+		 0.5, -0.5, -0.5,   1, 0, 0,
+		// Back
+		-0.5, -0.5,  0.5,   0, 1, 0,
+		-0.5,  0.5,  0.5,   0, 1, 0,
+		 0.5,  0.5,  0.5,   0, 1, 0,
+		 0.5, -0.5,  0.5,   0, 1, 0,
+		 // Top
+		-0.5,  0.5, -0.5,   0, 0, 1,
+		-0.5,  0.5,  0.5,   0, 0, 1,
+		 0.5,  0.5,  0.5,   0, 0, 1,
+		 0.5,  0.5, -0.5,   0, 0, 1,
+		 // Bottom
+		-0.5, -0.5, -0.5,   1, 1, 0,
+		-0.5, -0.5,  0.5,   1, 1, 0,
+		 0.5, -0.5,  0.5,   1, 1, 0,
+		 0.5, -0.5, -0.5,   1, 1, 0,
+		 // Left
+		-0.5, -0.5, -0.5,   0, 1, 1,
+		-0.5, -0.5,  0.5,   0, 1, 1,
+		-0.5,  0.5,  0.5,   0, 1, 1,
+		-0.5,  0.5, -0.5,   0, 1, 1,
+		//Right
+		 0.5, -0.5, -0.5,   1, 0, 1,
+		 0.5, -0.5,  0.5,   1, 0, 1,
+		 0.5,  0.5,  0.5,   1, 0, 1,
+		 0.5,  0.5, -0.5,   1, 0, 1,
+	};
 	unsigned int indices[] = {
+		// Front
 		0, 1, 2,
-		2, 3, 0
+		2, 3, 0,
+		// Back
+		4, 5, 6,
+		6, 7, 4,
+		// Top
+		8, 9, 10,
+		10, 11, 8,
+		// Bottom
+		12, 13, 14,
+		14, 15, 12,
+		// Left
+		16, 17, 18,
+		18, 19, 16,
+		// Right
+		20, 21, 22,
+		22, 23, 20,
 	}; 
 
 	// Create buffer and array objects
@@ -84,7 +135,7 @@ int main()
 		processInput(window);
 
 		// Clear screen
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Use program shaders
 		glUseProgram(programID);
@@ -92,35 +143,34 @@ int main()
 		// Bind VAO
 		glBindVertexArray(VAO);
 
-		// TRANSFORMATIONS
-		// Model
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
+		// COMMON TRANSFORMATIONS
 		// View
 		glm::mat4 view = glm::mat4(1.0f);
 		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		int modelLoc = glGetUniformLocation(programID, "view");
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(view));
 
 		// Projection
 		glm::mat4 projection;
 		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-
-		// UNIFORMS
-		// Model
-		int modelLoc = glGetUniformLocation(programID, "model");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-		// View
-		modelLoc = glGetUniformLocation(programID, "view");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-		// Projection
 		modelLoc = glGetUniformLocation(programID, "projection");
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-		// DRAW
-		// Draw the triangle
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		// MODELS
+		for(int i=0; i<10; i++)
+		{
+			// Model position
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, modelPositions[i]);
+			model = glm::rotate(model, glm::radians(20.0f*i) + (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
+
+			// Create uniform
+			modelLoc = glGetUniformLocation(programID, "model");
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+			// Draw
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		}
 
 		// Unbind VAO
 		glBindVertexArray(0);
@@ -164,6 +214,12 @@ int initialise(GLFWwindow *&window, GLuint &programID)
 		Log::print(Log::error, "Shader loading error.");
 		return -1;
 	}
+
+	// Z-Buffering
+	glEnable(GL_DEPTH_TEST);
+
+	// Set background
+	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
 	return 0;
 }

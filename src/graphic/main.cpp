@@ -9,6 +9,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+// Vector math
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "..\..\include\graphic\main.hpp"
 #include "..\..\include\graphic\util.hpp"
 #include "..\..\include\logger\log.hpp"
@@ -34,7 +39,7 @@ int main()
 
 	// Create triangles
 	float vertices[] = {
-		// Position-Colour-TexturePos
+		// Position - Colour
 		0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,
 		0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,
 		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,
@@ -87,6 +92,12 @@ int main()
 		// Bind VAO
 		glBindVertexArray(VAO);
 
+		// Transformation uniform
+		glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(0.4f, -0.4f, 0.0f));
+		unsigned int transformLoc = glGetUniformLocation(programID, "transform");
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+
 		// Draw the triangle
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -106,37 +117,6 @@ int main()
 
 	glfwTerminate();
 
-	return 0;
-}
-
-int loadTexture(const char *filepath, GLenum rasterType, GLuint &texID)
-{
-	// Create texture
-	glGenTextures(1, &texID);
-    glBindTexture(GL_TEXTURE_2D, texID);
-
-    // Settings
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // load image, create texture and generate mipmaps
-    int width, height, nChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char *data = stbi_load(filepath, &width, &height, &nChannels, 0);
-    if (!data)
-    {
-        Log::print( Log::error, "Texture loading error.");
-    	stbi_image_free(data);
-		return -1;
-    }
-
-	// Load image into texture
-	glTexImage2D(GL_TEXTURE_2D, 0, rasterType, width, height, 0, rasterType, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    stbi_image_free(data);
 	return 0;
 }
 

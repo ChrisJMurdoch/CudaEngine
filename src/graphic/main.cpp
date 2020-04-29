@@ -1,4 +1,7 @@
 
+
+// === INCLUDES ===
+
 // OpenGL initialisation
 #include <glad/glad.h>
 
@@ -18,15 +21,34 @@
 #include "..\..\include\graphic\util.hpp"
 #include "..\..\include\logger\log.hpp"
 
+
+// === CONSTANTS ===
+
+// Display constants
 const int VIEW_WIDTH = 800;
 const int VIEW_HEIGHT = 600;
 
+// Vector constants
+const glm::vec3 WORLD_UP = glm::vec3(0.0f, 1.0f,  0.0f);
+
+
+// === VARIABLES ===
+
+// Mouse
+float yaw = -90, pitch = 0;
+
+// Camera
+glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, -1.0f);
+
+
+// === FUNCTIONS ===
+
 int main()
 {
+	// Initialise graphics
 	GLFWwindow *window = NULL;
 	GLuint programID;
-
-	// Initialise graphics
 	if ( initialise(window, programID) != 0 )
 	{
 		Log::print(Log::error, "Initialisation error.");
@@ -129,10 +151,25 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+	float lastFrame = glfwGetTime();
+
+
 	while( !glfwWindowShouldClose(window) )
 	{
-		// Get key presses
-		processInput(window);
+		// Get time-delta
+		float currentFrame = glfwGetTime();
+		float deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+		
+		// Calculate view angle
+		glm::vec3 direction;
+		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		direction.y = sin(glm::radians(pitch));
+		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		glm::vec3 cameraDirection = glm::normalize(direction);
+
+		// Move
+		processInput(window, deltaTime, cameraDirection);
 
 		// Clear screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -145,14 +182,12 @@ int main()
 
 		// COMMON TRANSFORMATIONS
 		// View
-		glm::mat4 view = glm::mat4(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraDirection, WORLD_UP);
 		int modelLoc = glGetUniformLocation(programID, "view");
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(view));
 
 		// Projection
-		glm::mat4 projection;
-		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 		modelLoc = glGetUniformLocation(programID, "projection");
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
@@ -244,6 +279,8 @@ int createWindow(GLFWwindow *&window)
 
 	// Setup key press mode
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouseCallback);
 	
 	return 0;
 }
@@ -266,8 +303,52 @@ void resizeCallback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow *window)
+void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
+	static float lastX = VIEW_WIDTH/2, lastY = VIEW_HEIGHT/2;
+	static bool initialMouse = true;
+
+	// Ignore mouse on first frame
+	if (initialMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		initialMouse = false;
+		return;
+	}
+
+	// Adjust camera angle
+	const float sensitivity = 0.05f;
+	yaw += (xpos - lastX) * sensitivity;
+	pitch += (lastY - ypos) * sensitivity;
+	lastX = xpos;
+	lastY = ypos;
+
+	// Constrain pitch
+	if(pitch > 89.0f)
+		pitch =  89.0f;
+	if(pitch < -89.0f)
+		pitch = -89.0f;
+}
+
+void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection)
+{
+	// Close window
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+	
+	// Generate movement vectors
+	const float cameraSpeed = 2.0f * deltaTime;
+	const glm::vec3 forward = cameraSpeed * cameraDirection;
+	const glm::vec3 right   = cameraSpeed * glm::normalize(glm::cross(cameraDirection, WORLD_UP));
+
+	// Move
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPosition += forward;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPosition -= forward;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPosition -= right;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPosition += right;
 }

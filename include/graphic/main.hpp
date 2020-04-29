@@ -5,4 +5,5 @@ int initialise(GLFWwindow *&window, GLuint &programPtr);
 int createWindow(GLFWwindow *&window);
 int initGLAD(GLFWwindow *window);
 void resizeCallback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window);
+void mouseCallback(GLFWwindow* window, double xpos, double ypos);
+void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraFront);

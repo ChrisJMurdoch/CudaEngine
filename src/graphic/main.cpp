@@ -20,6 +20,7 @@
 #include "..\..\include\graphic\main.hpp"
 #include "..\..\include\graphic\util.hpp"
 #include "..\..\include\logger\log.hpp"
+#include "..\..\include\models\cube.hpp"
 
 
 // === CONSTANTS ===
@@ -70,90 +71,16 @@ int main()
 		glm::vec3(-1.3f,  1.0f, -1.5f),
 	};
 
-	// Triangles
-	float vertices[] = {
-		// Front
-		-0.5, -0.5, -0.5,   1, 0, 0,
-		-0.5,  0.5, -0.5,   1, 0, 0,
-		 0.5,  0.5, -0.5,   1, 0, 0,
-		 0.5, -0.5, -0.5,   1, 0, 0,
-		// Back
-		-0.5, -0.5,  0.5,   0, 1, 0,
-		-0.5,  0.5,  0.5,   0, 1, 0,
-		 0.5,  0.5,  0.5,   0, 1, 0,
-		 0.5, -0.5,  0.5,   0, 1, 0,
-		 // Top
-		-0.5,  0.5, -0.5,   0, 0, 1,
-		-0.5,  0.5,  0.5,   0, 0, 1,
-		 0.5,  0.5,  0.5,   0, 0, 1,
-		 0.5,  0.5, -0.5,   0, 0, 1,
-		 // Bottom
-		-0.5, -0.5, -0.5,   1, 1, 0,
-		-0.5, -0.5,  0.5,   1, 1, 0,
-		 0.5, -0.5,  0.5,   1, 1, 0,
-		 0.5, -0.5, -0.5,   1, 1, 0,
-		 // Left
-		-0.5, -0.5, -0.5,   0, 1, 1,
-		-0.5, -0.5,  0.5,   0, 1, 1,
-		-0.5,  0.5,  0.5,   0, 1, 1,
-		-0.5,  0.5, -0.5,   0, 1, 1,
-		//Right
-		 0.5, -0.5, -0.5,   1, 0, 1,
-		 0.5, -0.5,  0.5,   1, 0, 1,
-		 0.5,  0.5,  0.5,   1, 0, 1,
-		 0.5,  0.5, -0.5,   1, 0, 1,
-	};
-	unsigned int indices[] = {
-		// Front
-		0, 1, 2,
-		2, 3, 0,
-		// Back
-		4, 5, 6,
-		6, 7, 4,
-		// Top
-		8, 9, 10,
-		10, 11, 8,
-		// Bottom
-		12, 13, 14,
-		14, 15, 12,
-		// Left
-		16, 17, 18,
-		18, 19, 16,
-		// Right
-		20, 21, 22,
-		22, 23, 20,
-	}; 
-
 	// Create buffer and array objects
 	GLuint VAO, VBO, EBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	// Bind objects
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
-	// Copy over buffer data
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// Colour attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// Unbind buffers and array
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
+	createBuffers(
+		cube::vertices, sizeof(cube::vertices),
+		cube::indices, sizeof(cube::indices),
+		VAO, VBO, EBO
+	);
+	
+	// Main loop
 	float lastFrame = glfwGetTime();
-
-
 	while( !glfwWindowShouldClose(window) )
 	{
 		// Get time-delta
@@ -329,6 +256,40 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 		pitch =  89.0f;
 	if(pitch < -89.0f)
 		pitch = -89.0f;
+}
+
+void createBuffers(
+	float vertices[], int nVertices,
+	unsigned int indices[], int nIndices,
+	GLuint &VAO, GLuint &VBO, GLuint &EBO
+)
+{
+	// Generate buffers
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	// Bind objects
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+	// Copy over buffer data
+	Log::print(Log::force, sizeof(vertices));
+	glBufferData(GL_ARRAY_BUFFER, nVertices, vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndices, indices, GL_STATIC_DRAW);
+
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// Colour attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	// Unbind buffers and array
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection)

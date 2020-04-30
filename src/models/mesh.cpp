@@ -98,23 +98,47 @@ namespace mesh
         vertex[COORD_INDEX+2] = z;
 
         // RGB
-        if (triY>3)
+        if (triY>20)
         {
-            vertex[COLOUR_INDEX+0] = 0.7 + flat*0.3;
-            vertex[COLOUR_INDEX+1] = 0.7 + flat*0.3;
-            vertex[COLOUR_INDEX+2] = 0.7 + flat*0.3;
+            if (flat >= 0.65)
+            {
+                vertex[COLOUR_INDEX+0] = 0.1 + flat*0.4 + 2*(flat-0.65);
+                vertex[COLOUR_INDEX+1] = 0.1 + flat*0.4 + 2*(flat-0.65);
+                vertex[COLOUR_INDEX+2] = 0.1 + flat*0.4 + 2*(flat-0.65);
+            }
+            else
+            {
+                vertex[COLOUR_INDEX+0] = 0.1 + flat*0.4;
+                vertex[COLOUR_INDEX+1] = 0.1 + flat*0.4;
+                vertex[COLOUR_INDEX+2] = 0.1 + flat*0.4;
+            }
         }
-        else if (triY>0.5)
+        else if (triY>4)
         {
-            vertex[COLOUR_INDEX+0] = 0.4;
-            vertex[COLOUR_INDEX+1] = flat*0.8;
-            vertex[COLOUR_INDEX+2] = 0.4;
+            if (flat >= 0.85)
+            {
+                vertex[COLOUR_INDEX+0] = 0.1 + flat*0.4 - 2*(flat-0.85);
+                vertex[COLOUR_INDEX+1] = 0.1 + flat*0.4 + 2*(flat-0.85);
+                vertex[COLOUR_INDEX+2] = 0.1 + flat*0.4 - 2*(flat-0.85);
+            }
+            else
+            {
+                vertex[COLOUR_INDEX+0] = 0.1 + flat*0.4;
+                vertex[COLOUR_INDEX+1] = 0.1 + flat*0.4;
+                vertex[COLOUR_INDEX+2] = 0.1 + flat*0.4;
+            }
+        }
+        else if (triY>3)
+        {
+            vertex[COLOUR_INDEX+0] = 0.4 + flat*0.4;
+            vertex[COLOUR_INDEX+1] = 0.4 + flat*0.4;
+            vertex[COLOUR_INDEX+2] = 0.2 + flat*0.4;
         }
         else
         {
-            vertex[COLOUR_INDEX+0] = 0.7 + flat*0.1;
-            vertex[COLOUR_INDEX+1] = 0.7 + flat*0.1;
-            vertex[COLOUR_INDEX+2] = 0.4 + flat*0.1;
+            vertex[COLOUR_INDEX+0] = 0.1 + flat*0.3;
+            vertex[COLOUR_INDEX+1] = 0.2 + flat*0.3;
+            vertex[COLOUR_INDEX+2] = 0.6 + flat*0.3;
         }
     }
 }

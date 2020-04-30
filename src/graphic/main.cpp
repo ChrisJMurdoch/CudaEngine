@@ -66,15 +66,8 @@ int main()
 	};
 
 	// Create terrain model
-	const int width = 10;
-	float *map = terrain::generateHeightMap(width, 0, 4);
-	/*float map[] = {
-		3.5, 3.1, 2.3, 2.2, 0.5,
-		3.1, 2.8, 2.2, 2.0, 0.4,
-		2.5, 1.8, 0.4, 0.4, 0.2,
-		1.8, 0.7, 0.4, 0.0, 0.0,
-		1.0, 0.5, 0.2, 0.0, 0.2,
-	};*/
+	const int width = 200;
+	float *map = terrain::generateHeightMap(width, 0, 50);
 	float *vertices = mesh::generateVertices(map, width);
 	int nVertices = pow(width-1, 2) * 6;
 
@@ -133,6 +126,7 @@ int main()
 			// Model position
 			glm::mat4 model = glm::mat4(1.0f);
 			model = glm::translate(model, models[i]);
+			model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
 			modelLoc = glGetUniformLocation(programID, "model");
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
@@ -295,7 +289,7 @@ void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection
         glfwSetWindowShouldClose(window, true);
 	
 	// Generate movement vectors
-	const float cameraSpeed = 2.0f * deltaTime;
+	const float cameraSpeed = 6.0f * deltaTime;
 	const glm::vec3 forward = cameraSpeed * cameraDirection;
 	const glm::vec3 right = cameraSpeed * glm::normalize(glm::cross(cameraDirection, WORLD_UP));
 	const glm::vec3 up = cameraSpeed * glm::normalize(glm::cross(right, forward));

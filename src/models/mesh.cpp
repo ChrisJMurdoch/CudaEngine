@@ -1,7 +1,11 @@
 
 #include <cmath>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "..\..\include\models\mesh.hpp"
+#include "..\..\include\logger\log.hpp"
 
 namespace mesh
 {
@@ -36,24 +40,44 @@ namespace mesh
                 if (toggle = !toggle)
                 {
                     // Tri 1
-                    setVertex( &vertices[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   1 );
-                    setVertex( &vertices[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   1 );
-                    setVertex( &vertices[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, 1 );
+                    glm::vec3 a = glm::vec3( (origin+col),   (nodes[index]),       (origin+row)   );
+                    glm::vec3 b = glm::vec3( (origin+col+1), (nodes[index+1]),     (origin+row)   );
+                    glm::vec3 c = glm::vec3( (origin+col),   (nodes[index+width]), (origin+row+1) );
+                    glm::vec3 normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
+                    float flat = abs(normal.y);
+                    setVertex( &vertices[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   normal.y );
+                    setVertex( &vertices[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   normal.y );
+                    setVertex( &vertices[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, normal.y );
                     // Tri 2
-                    setVertex( &vertices[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   1 );
-                    setVertex( &vertices[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, 1 );
-                    setVertex( &vertices[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, 1 );
+                    a = glm::vec3( (origin+col+1),   (nodes[index+1]),     (origin+row)   );
+                    b = glm::vec3( (origin+col+1), (nodes[index+1+width]), (origin+row+1) );
+                    c = glm::vec3( (origin+col),   (nodes[index+width]),   (origin+row+1) );
+                    normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
+                    flat = abs(normal.y);
+                    setVertex( &vertices[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   normal.y );
+                    setVertex( &vertices[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, normal.y );
+                    setVertex( &vertices[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, normal.y );
                 }
                 else
                 {
                     // Tri 1
-                    setVertex( &vertices[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   1 );
-                    setVertex( &vertices[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, 1 );
-                    setVertex( &vertices[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, 1 );
+                    glm::vec3 a = glm::vec3( (origin+col),   (nodes[index]),         (origin+row)   );
+                    glm::vec3 b = glm::vec3( (origin+col+1), (nodes[index+1+width]), (origin+row+1) );
+                    glm::vec3 c = glm::vec3( (origin+col),   (nodes[index+width]),   (origin+row+1) );
+                    glm::vec3 normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
+                    float flat = abs(normal.y);
+                    setVertex( &vertices[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   normal.y );
+                    setVertex( &vertices[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, normal.y );
+                    setVertex( &vertices[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, normal.y );
                     // Tri 2
-                    setVertex( &vertices[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   1 );
-                    setVertex( &vertices[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, 1 );
-                    setVertex( &vertices[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   1 );
+                    a = glm::vec3( (origin+col+1),   (nodes[index+1]),     (origin+row)   );
+                    b = glm::vec3( (origin+col+1), (nodes[index+1+width]), (origin+row+1) );
+                    c = glm::vec3( (origin+col),   (nodes[index]),         (origin+row)   );
+                    normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
+                    flat = abs(normal.y);
+                    setVertex( &vertices[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   normal.y );
+                    setVertex( &vertices[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, normal.y );
+                    setVertex( &vertices[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   normal.y );
                 }
                 
                 quad++;
@@ -68,10 +92,10 @@ namespace mesh
         vertex[COORD_INDEX+0] = x;
         vertex[COORD_INDEX+1] = y;
         vertex[COORD_INDEX+2] = z;
+
         // RGB
-        float shade = (y + 3) / 6;
-        vertex[COLOUR_INDEX+0] = shade;
-        vertex[COLOUR_INDEX+1] = shade;
-        vertex[COLOUR_INDEX+2] = shade;
+        vertex[COLOUR_INDEX+0] = 0.4;
+        vertex[COLOUR_INDEX+1] = flat*0.7;
+        vertex[COLOUR_INDEX+2] = 0.4;
     }
 }

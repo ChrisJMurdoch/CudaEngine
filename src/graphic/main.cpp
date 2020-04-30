@@ -17,10 +17,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+// Engine
 #include "..\..\include\graphic\main.hpp"
 #include "..\..\include\graphic\util.hpp"
 #include "..\..\include\logger\log.hpp"
 #include "..\..\include\models\cube.hpp"
+#include "..\..\include\models\map.hpp"
 
 
 // === CONSTANTS ===
@@ -39,8 +41,8 @@ const glm::vec3 WORLD_UP = glm::vec3(0.0f, 1.0f,  0.0f);
 float yaw = -90, pitch = 0;
 
 // Camera
-glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f,  3.0f);
-glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 2.0f,  0.0f);
+glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 
 
 // === FUNCTIONS ===
@@ -58,45 +60,50 @@ int main()
 	}
 
 	// Model positions
-	glm::vec3 modelPositions[] = {
+	glm::vec3 models[] = {
 		glm::vec3( 0.0f,  0.0f,  0.0f),
-		glm::vec3( 2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3( 2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3( 1.3f, -2.0f, -2.5f),
-		glm::vec3( 1.5f,  2.0f, -2.5f),
-		glm::vec3( 1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f),
 	};
+
+	// Get map dimensions
+	const int width = 20;
+
+	// Create map
+	int nVertices, nIndices;
+	float *vertices = map::mapVertices(width, nVertices);
+	unsigned int *indices = map::mapIndices(width, nIndices);
 
 	// Create buffer and array objects
 	GLuint VAO, VBO, EBO;
 	createBuffers(
-		cube::vertices, sizeof(cube::vertices),
-		cube::indices, sizeof(cube::indices),
+		vertices, nVertices * 6*sizeof(float),
+		indices, nIndices * sizeof(unsigned int),
 		VAO, VBO, EBO
 	);
+	delete vertices;
+	delete indices;
 	
 	// Main loop
-	float lastFrame = glfwGetTime();
+	float lastTime = glfwGetTime();
 	while( !glfwWindowShouldClose(window) )
 	{
+		// PHYSICS
+
 		// Get time-delta
-		float currentFrame = glfwGetTime();
-		float deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
+		float currentTime = glfwGetTime();
+		float deltaTime = currentTime - lastTime;
+		lastTime = currentTime;
 		
-		// Calculate view angle
+		// Calculate new camera angle
 		glm::vec3 direction;
-		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		direction.y = sin(glm::radians(pitch));
-		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		direction.x = cos( glm::radians(yaw)) * cos(glm::radians(pitch) );
+		direction.y = sin( glm::radians(pitch) );
+		direction.z = sin( glm::radians(yaw)) * cos(glm::radians(pitch) );
 		glm::vec3 cameraDirection = glm::normalize(direction);
 
 		// Move
 		processInput(window, deltaTime, cameraDirection);
+
+		// RENDERING
 
 		// Clear screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -108,6 +115,7 @@ int main()
 		glBindVertexArray(VAO);
 
 		// COMMON TRANSFORMATIONS
+
 		// View
 		glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraDirection, WORLD_UP);
 		int modelLoc = glGetUniformLocation(programID, "view");
@@ -119,19 +127,17 @@ int main()
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		// MODELS
-		for(int i=0; i<10; i++)
+
+		for(int i=0; i<sizeof(models)/sizeof(models[0]); i++)
 		{
 			// Model position
 			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, modelPositions[i]);
-			model = glm::rotate(model, glm::radians(20.0f*i) + (float)glfwGetTime(), glm::vec3(1.0f, 0.3f, 0.5f));
-
-			// Create uniform
+			model = glm::translate(model, models[i]);
 			modelLoc = glGetUniformLocation(programID, "model");
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 			// Draw
-			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_INT, 0);
 		}
 
 		// Unbind VAO
@@ -181,7 +187,7 @@ int initialise(GLFWwindow *&window, GLuint &programID)
 	glEnable(GL_DEPTH_TEST);
 
 	// Set background
-	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+	glClearColor(0.3f, 0.7f, 0.9f, 1.0f);
 
 	return 0;
 }
@@ -301,7 +307,8 @@ void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection
 	// Generate movement vectors
 	const float cameraSpeed = 2.0f * deltaTime;
 	const glm::vec3 forward = cameraSpeed * cameraDirection;
-	const glm::vec3 right   = cameraSpeed * glm::normalize(glm::cross(cameraDirection, WORLD_UP));
+	const glm::vec3 right = cameraSpeed * glm::normalize(glm::cross(cameraDirection, WORLD_UP));
+	const glm::vec3 up = cameraSpeed * glm::normalize(glm::cross(right, forward));
 
 	// Move
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -312,4 +319,8 @@ void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection
         cameraPosition -= right;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cameraPosition += right;
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        cameraPosition += up;
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        cameraPosition -= up;
 }

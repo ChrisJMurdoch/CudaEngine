@@ -1,4 +1,6 @@
 
+#pragma once
+
 namespace cube
 {
     float vertices[] = {

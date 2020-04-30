@@ -42,7 +42,7 @@ const glm::vec3 WORLD_UP = glm::vec3(0.0f, 1.0f,  0.0f);
 float yaw = -90, pitch = 0;
 
 // Camera
-glm::vec3 cameraPosition = glm::vec3(0.0f, 2.0f,  0.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 10.0f,  0.0f);
 glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 
 
@@ -66,8 +66,15 @@ int main()
 	};
 
 	// Create terrain model
-	const int width = 20;
-	float *map = terrain::generateHeightMap(width, 0, 1);
+	const int width = 10;
+	float *map = terrain::generateHeightMap(width, 0, 4);
+	/*float map[] = {
+		3.5, 3.1, 2.3, 2.2, 0.5,
+		3.1, 2.8, 2.2, 2.0, 0.4,
+		2.5, 1.8, 0.4, 0.4, 0.2,
+		1.8, 0.7, 0.4, 0.0, 0.0,
+		1.0, 0.5, 0.2, 0.0, 0.2,
+	};*/
 	float *vertices = mesh::generateVertices(map, width);
 	int nVertices = pow(width-1, 2) * 6;
 

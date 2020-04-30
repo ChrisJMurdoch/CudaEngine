@@ -22,7 +22,8 @@
 #include "..\..\include\graphic\util.hpp"
 #include "..\..\include\logger\log.hpp"
 #include "..\..\include\models\cube.hpp"
-#include "..\..\include\models\map.hpp"
+#include "..\..\include\models\mesh.hpp"
+#include "..\..\include\models\terrain.hpp"
 
 
 // === CONSTANTS ===
@@ -64,23 +65,15 @@ int main()
 		glm::vec3( 0.0f,  0.0f,  0.0f),
 	};
 
-	// Get map dimensions
+	// Create terrain model
 	const int width = 20;
-
-	// Create map
-	int nVertices, nIndices;
-	float *vertices = map::mapVertices(width, nVertices);
-	unsigned int *indices = map::mapIndices(width, nIndices);
+	float *map = terrain::generateHeightMap(width, 0, 1);
+	float *vertices = mesh::generateVertices(map, width);
+	int nVertices = pow(width-1, 2) * 6;
 
 	// Create buffer and array objects
-	GLuint VAO, VBO, EBO;
-	createBuffers(
-		vertices, nVertices * 6*sizeof(float),
-		indices, nIndices * sizeof(unsigned int),
-		VAO, VBO, EBO
-	);
-	delete vertices;
-	delete indices;
+	GLuint VAO, VBO;
+	createBuffers( vertices, nVertices * 6*sizeof(float), VAO, VBO );
 	
 	// Main loop
 	float lastTime = glfwGetTime();
@@ -137,7 +130,7 @@ int main()
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 			// Draw
-			glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_INT, 0);
+			glDrawArrays(GL_TRIANGLES, 0, nVertices);
 		}
 
 		// Unbind VAO
@@ -151,7 +144,6 @@ int main()
 	// Cleanup
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
 	glDeleteProgram(programID);
 
 	glfwTerminate();
@@ -264,26 +256,18 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 		pitch = -89.0f;
 }
 
-void createBuffers(
-	float vertices[], int nVertices,
-	unsigned int indices[], int nIndices,
-	GLuint &VAO, GLuint &VBO, GLuint &EBO
-)
+void createBuffers(float vertices[], int nVertices, GLuint &VAO, GLuint &VBO)
 {
 	// Generate buffers
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
 
 	// Bind objects
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
 	// Copy over buffer data
-	Log::print(Log::force, sizeof(vertices));
 	glBufferData(GL_ARRAY_BUFFER, nVertices, vertices, GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndices, indices, GL_STATIC_DRAW);
 
 	// Position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
@@ -295,7 +279,6 @@ void createBuffers(
 	// Unbind buffers and array
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection)

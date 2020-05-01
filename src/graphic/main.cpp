@@ -60,20 +60,24 @@ int main()
 		return -1;
 	}
 
-	// Model positions
-	glm::vec3 models[] = {
-		glm::vec3( 0.0f,  0.0f,  0.0f),
-	};
-
-	// Create terrain model
-	const int width = 200;
-	float *map = terrain::generateHeightMap(width, 0, 50);
-	float *vertices = mesh::generateVertices(map, width);
+	// Create terrain models
+	const int width = 150;
+	float *terrainMap = terrain::generateHeightMap(width, 0, 50, 1);
+	float *waterMap = terrain::generateWaterMap(width, 2, 2.2);
+	float *terrainMesh = mesh::generateVertices(terrainMap, width, false);
+	float *waterMesh = mesh::generateVertices(waterMap, width, true);
 	int nVertices = pow(width-1, 2) * 6;
 
+	// Models
+	GLuint terrainVAO, waterVAO, terrainVBO, waterVBO;
+	createBuffers( terrainMesh, nVertices * 6*sizeof(float), terrainVAO, terrainVBO );
+	createBuffers( waterMesh, nVertices * 6*sizeof(float), waterVAO, waterVBO );
+	GLuint models[] = {
+		terrainVAO,
+		waterVAO,
+	};
+
 	// Create buffer and array objects
-	GLuint VAO, VBO;
-	createBuffers( vertices, nVertices * 6*sizeof(float), VAO, VBO );
 	
 	// Main loop
 	float lastTime = glfwGetTime();
@@ -104,9 +108,6 @@ int main()
 		// Use program shaders
 		glUseProgram(programID);
 
-		// Bind VAO
-		glBindVertexArray(VAO);
-
 		// COMMON TRANSFORMATIONS
 
 		// View
@@ -123,9 +124,11 @@ int main()
 
 		for(int i=0; i<sizeof(models)/sizeof(models[0]); i++)
 		{
+			// Bind VAO
+			glBindVertexArray(models[i]);
+
 			// Model position
 			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, models[i]);
 			model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
 			modelLoc = glGetUniformLocation(programID, "model");
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -143,8 +146,10 @@ int main()
 	}
 
 	// Cleanup
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, &terrainVAO);
+	glDeleteBuffers(1, &terrainVBO);
+	glDeleteVertexArrays(1, &waterVAO);
+	glDeleteBuffers(1, &waterVBO);
 	glDeleteProgram(programID);
 
 	glfwTerminate();

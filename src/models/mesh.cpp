@@ -13,7 +13,7 @@ namespace mesh
     const int COORD_INDEX = 0;
     const int COLOUR_INDEX = 3;
 
-    float *generateVertices(float *nodes, int width)
+    float *generateVertices(float *nodes, int width, bool water)
     {
         // Dimensions
         int quadWidth = width-1;
@@ -46,9 +46,9 @@ namespace mesh
                     glm::vec3 normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
                     float flat = abs(normal.y);
                     float triY = (a.y + b.y + c.y) / 3;
-                    setVertex( &vertices[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   flat, triY );
-                    setVertex( &vertices[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   flat, triY );
-                    setVertex( &vertices[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, flat, triY );
+                    setVertex( &vertices[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   flat, triY, water );
+                    setVertex( &vertices[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   flat, triY, water );
+                    setVertex( &vertices[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, flat, triY, water );
                     // Tri 2
                     a = glm::vec3( (origin+col+1),   (nodes[index+1]),     (origin+row)   );
                     b = glm::vec3( (origin+col+1), (nodes[index+1+width]), (origin+row+1) );
@@ -56,9 +56,9 @@ namespace mesh
                     normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
                     flat = abs(normal.y);
                     triY = (a.y + b.y + c.y) / 3;
-                    setVertex( &vertices[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   flat, triY );
-                    setVertex( &vertices[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, flat, triY );
-                    setVertex( &vertices[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, flat, triY );
+                    setVertex( &vertices[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   flat, triY, water );
+                    setVertex( &vertices[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, flat, triY, water );
+                    setVertex( &vertices[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, flat, triY, water );
                 }
                 else
                 {
@@ -69,9 +69,9 @@ namespace mesh
                     glm::vec3 normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
                     float flat = abs(normal.y);
                     float triY = (a.y + b.y + c.y) / 3;
-                    setVertex( &vertices[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   flat, triY );
-                    setVertex( &vertices[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, flat, triY );
-                    setVertex( &vertices[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, flat, triY );
+                    setVertex( &vertices[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   flat, triY, water );
+                    setVertex( &vertices[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, flat, triY, water );
+                    setVertex( &vertices[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, flat, triY, water );
                     // Tri 2
                     a = glm::vec3( (origin+col+1),   (nodes[index+1]),     (origin+row)   );
                     b = glm::vec3( (origin+col+1), (nodes[index+1+width]), (origin+row+1) );
@@ -79,9 +79,9 @@ namespace mesh
                     normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
                     flat = abs(normal.y);
                     triY = (a.y + b.y + c.y) / 3;
-                    setVertex( &vertices[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   flat, triY );
-                    setVertex( &vertices[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, flat, triY );
-                    setVertex( &vertices[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   flat, triY );
+                    setVertex( &vertices[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   flat, triY, water );
+                    setVertex( &vertices[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, flat, triY, water );
+                    setVertex( &vertices[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   flat, triY, water );
                 }
                 
                 quad++;
@@ -90,7 +90,7 @@ namespace mesh
         return vertices;
     }
 
-    void setVertex(float *vertex, float x, float y, float z, float flat, float triY)
+    void setVertex(float *vertex, float x, float y, float z, float flat, float triY, bool water)
     {
         // XYZ
         vertex[COORD_INDEX+0] = x;
@@ -98,47 +98,30 @@ namespace mesh
         vertex[COORD_INDEX+2] = z;
 
         // RGB
-        if (triY>20)
-        {
-            if (flat >= 0.65)
-            {
-                vertex[COLOUR_INDEX+0] = 0.1 + flat*0.4 + 2*(flat-0.65);
-                vertex[COLOUR_INDEX+1] = 0.1 + flat*0.4 + 2*(flat-0.65);
-                vertex[COLOUR_INDEX+2] = 0.1 + flat*0.4 + 2*(flat-0.65);
-            }
-            else
-            {
-                vertex[COLOUR_INDEX+0] = 0.1 + flat*0.4;
-                vertex[COLOUR_INDEX+1] = 0.1 + flat*0.4;
-                vertex[COLOUR_INDEX+2] = 0.1 + flat*0.4;
-            }
-        }
+        glm::vec3 stone = glm::vec3(0.45, 0.4, 0.35);
+        if (water)
+            setColour( vertex, flat, glm::vec3(0.1, 0.2, 0.4), glm::vec3(0.2, 0.4, 0.8), 0.7 ); // Water
+
+        else if (triY>20)
+            setColour( vertex, flat, stone, glm::vec3(1.0, 1.0, 1.0), 0.8 ); // Snow
+
         else if (triY>4)
-        {
-            if (flat >= 0.85)
-            {
-                vertex[COLOUR_INDEX+0] = 0.1 + flat*0.4 - 2*(flat-0.85);
-                vertex[COLOUR_INDEX+1] = 0.1 + flat*0.4 + 2*(flat-0.85);
-                vertex[COLOUR_INDEX+2] = 0.1 + flat*0.4 - 2*(flat-0.85);
-            }
-            else
-            {
-                vertex[COLOUR_INDEX+0] = 0.1 + flat*0.4;
-                vertex[COLOUR_INDEX+1] = 0.1 + flat*0.4;
-                vertex[COLOUR_INDEX+2] = 0.1 + flat*0.4;
-            }
-        }
-        else if (triY>3)
-        {
-            vertex[COLOUR_INDEX+0] = 0.4 + flat*0.4;
-            vertex[COLOUR_INDEX+1] = 0.4 + flat*0.4;
-            vertex[COLOUR_INDEX+2] = 0.2 + flat*0.4;
-        }
+            setColour( vertex, flat, stone, glm::vec3(0.3, 0.6, 0.2), 0.8 ); // Grass
+
         else
-        {
-            vertex[COLOUR_INDEX+0] = 0.1 + flat*0.3;
-            vertex[COLOUR_INDEX+1] = 0.2 + flat*0.3;
-            vertex[COLOUR_INDEX+2] = 0.6 + flat*0.3;
-        }
+            setColour( vertex, flat, stone, glm::vec3(0.8, 0.8, 0.7), 0.8 ); // Sand
+    }
+
+    void setColour(float *vertex, float flat, glm::vec3 steepCol, glm::vec3 flatCol, float delay)
+    {
+        const float MIN_FLAT = 0.45;
+        const float LIGHT = 1.0;
+
+        flat = flat<MIN_FLAT ? MIN_FLAT : flat;
+        float adjust = flat>delay ? (flat-delay) / (1-delay) : 0;
+        
+        vertex[COLOUR_INDEX+0] = ( (1-adjust)*steepCol.r + adjust*flatCol.r ) * ( (1-LIGHT) + (flat*LIGHT) );
+        vertex[COLOUR_INDEX+1] = ( (1-adjust)*steepCol.g + adjust*flatCol.g ) * ( (1-LIGHT) + (flat*LIGHT) );
+        vertex[COLOUR_INDEX+2] = ( (1-adjust)*steepCol.b + adjust*flatCol.b ) * ( (1-LIGHT) + (flat*LIGHT) );
     }
 }

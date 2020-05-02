@@ -61,8 +61,11 @@ int main()
 	}
 
 	// Create terrain models
-	const int width = 150;
-	float *terrainMap = terrain::generateHeightMap(width, 0, 50, 1);
+	const int width = 180;
+	const float height = 20;
+	const float freq = 0.5;
+
+	float *terrainMap = terrain::generateHeightMap(width, 0, height, freq);
 	float *waterMap = terrain::generateWaterMap(width, 2, 2.2);
 	float *terrainMesh = mesh::generateVertices(terrainMap, width, false);
 	float *waterMesh = mesh::generateVertices(waterMap, width, true);

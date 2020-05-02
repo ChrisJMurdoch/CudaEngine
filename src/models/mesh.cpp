@@ -98,30 +98,48 @@ namespace mesh
         vertex[COORD_INDEX+2] = z;
 
         // RGB
-        glm::vec3 stone = glm::vec3(0.45, 0.4, 0.35);
+        glm::vec3 snow = glm::vec3(1.0, 1.0, 1.0);
+        glm::vec3 stone = glm::vec3(0.35, 0.3, 0.25);
+        glm::vec3 grass = glm::vec3(0.2, 0.4, 0.0);
+        glm::vec3 dirt = glm::vec3(0.35, 0.2, 0.0);
+        glm::vec3 sand = glm::vec3(0.8, 0.8, 0.7);
+
         if (water)
             setColour( vertex, flat, glm::vec3(0.1, 0.2, 0.4), glm::vec3(0.2, 0.4, 0.8), 0.7 ); // Water
 
-        else if (triY>20)
-            setColour( vertex, flat, stone, glm::vec3(1.0, 1.0, 1.0), 0.8 ); // Snow
+        else if (triY>10)
+            setColour( vertex, flat, stone, snow, 0.85, 0.9 ); // Snow
 
-        else if (triY>4)
-            setColour( vertex, flat, stone, glm::vec3(0.3, 0.6, 0.2), 0.8 ); // Grass
+        else if (triY>5)
+            setColour( vertex, flat, stone, stone, 0.85, 0.9 ); // Mountain
+
+        else if (triY>3)
+            setColour( vertex, flat, dirt, grass, 0.85, 0.9 ); // Grass
 
         else
-            setColour( vertex, flat, stone, glm::vec3(0.8, 0.8, 0.7), 0.8 ); // Sand
+            setColour( vertex, flat, dirt, sand, 0, 1.0 ); // Sand
     }
 
-    void setColour(float *vertex, float flat, glm::vec3 steepCol, glm::vec3 flatCol, float delay)
+    void setColour(float *vertex, float flat, glm::vec3 steepCol, glm::vec3 flatCol, float min, float max)
     {
-        const float MIN_FLAT = 0.45;
-        const float LIGHT = 1.0;
+        // Validate input
+        if ( min<0 || min>=1 || max <=0 || max >1 )
+            Log::print(Log::error, "setColour: illegal args");
 
-        flat = flat<MIN_FLAT ? MIN_FLAT : flat;
-        float adjust = flat>delay ? (flat-delay) / (1-delay) : 0;
-        
-        vertex[COLOUR_INDEX+0] = ( (1-adjust)*steepCol.r + adjust*flatCol.r ) * ( (1-LIGHT) + (flat*LIGHT) );
-        vertex[COLOUR_INDEX+1] = ( (1-adjust)*steepCol.g + adjust*flatCol.g ) * ( (1-LIGHT) + (flat*LIGHT) );
-        vertex[COLOUR_INDEX+2] = ( (1-adjust)*steepCol.b + adjust*flatCol.b ) * ( (1-LIGHT) + (flat*LIGHT) );
+        // Calculate transition
+        float adjusted;
+        if ( min == max )
+            adjusted = flat<min ? 0 : 1;
+        else
+            adjusted = (flat-min) / (max-min);
+
+        // Clip transition
+        adjusted = adjusted<0.0 ? 0.0 : adjusted;
+        adjusted = adjusted>1.0 ? 1.0 : adjusted;
+
+        // Set vertex
+        vertex[COLOUR_INDEX+0] = ( (1-adjusted)*steepCol.r + adjusted*flatCol.r ) * flat;
+        vertex[COLOUR_INDEX+1] = ( (1-adjusted)*steepCol.g + adjusted*flatCol.g ) * flat;
+        vertex[COLOUR_INDEX+2] = ( (1-adjusted)*steepCol.b + adjusted*flatCol.b ) * flat;
     }
 }

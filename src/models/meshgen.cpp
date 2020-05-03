@@ -4,10 +4,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "..\..\include\models\mesh.hpp"
+#include "..\..\include\models\meshgen.hpp"
 #include "..\..\include\logger\log.hpp"
 
-namespace mesh
+namespace meshgen
 {
     const int VERTEX_SIZE = 6;
     const int COORD_INDEX = 0;

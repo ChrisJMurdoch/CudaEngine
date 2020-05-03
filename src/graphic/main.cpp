@@ -22,7 +22,7 @@
 #include "..\..\include\graphic\util.hpp"
 #include "..\..\include\logger\log.hpp"
 #include "..\..\include\models\cube.hpp"
-#include "..\..\include\models\mesh.hpp"
+#include "..\..\include\models\meshgen.hpp"
 #include "..\..\include\models\terrain.hpp"
 
 
@@ -67,8 +67,8 @@ int main()
 
 	float *terrainMap = terrain::generateHeightMap(width, 0, height, freq);
 	float *waterMap = terrain::generateWaterMap(width, 2, 2.2);
-	float *terrainMesh = mesh::generateVertices(terrainMap, width, false);
-	float *waterMesh = mesh::generateVertices(waterMap, width, true);
+	float *terrainMesh = meshgen::generateVertices(terrainMap, width, false);
+	float *waterMesh = meshgen::generateVertices(waterMap, width, true);
 	int nVertices = pow(width-1, 2) * 6;
 
 	// Models

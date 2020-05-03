@@ -1,25 +1,24 @@
 
 #include <glad/glad.h>
 
-#include "..\..\include\models\model.hpp"
+#include "..\..\include\models\sModel.hpp"
+#include "..\..\include\logger\log.hpp"
 
-Model::Model(float *vertexData, int nVertices)
+SModel::SModel(float *vertexData, int nVertices, bool dynamic)
 {
     this->nVertices = nVertices;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
-    setVertexData(vertexData);
-}
 
-void Model::setVertexData(float *vertexData)
-{
 	// Bind buffers
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
 	// Copy over data
-	glBufferData(GL_ARRAY_BUFFER, nVertices*STRIDE, vertexData, GL_STATIC_DRAW);
-    
+	if (dynamic)
+		glBufferData(GL_ARRAY_BUFFER, nVertices*STRIDE, vertexData, GL_DYNAMIC_DRAW);
+	else
+		glBufferData(GL_ARRAY_BUFFER, nVertices*STRIDE, vertexData, GL_STATIC_DRAW);
 
 	// Position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, STRIDE, (void*)ATTR_COORDS);
@@ -29,19 +28,18 @@ void Model::setVertexData(float *vertexData)
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, STRIDE, (void*)ATTR_COLOUR);
 	glEnableVertexAttribArray(1);
 
-	// Unbind buffers
+	// Unbind buffer
 	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Model::render()
+void SModel::render()
 {
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, nVertices);
     glBindVertexArray(0);
 }
 
-Model::~Model()
+SModel::~SModel()
 {
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);

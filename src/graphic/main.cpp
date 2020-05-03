@@ -23,7 +23,8 @@
 #include "..\..\include\generation\meshgen.hpp"
 #include "..\..\include\generation\terrain.hpp"
 #include "..\..\include\logger\log.hpp"
-#include "..\..\include\models\model.hpp"
+#include "..\..\include\models\dModel.hpp"
+#include "..\..\include\models\sModel.hpp"
 
 
 // === CONSTANTS ===
@@ -81,11 +82,17 @@ int main()
 	delete waterMap;
 
 	// Create models
-	Model models[] = {
-		Model( terrainMesh, nVertices ),
-		Model( waterMesh, nVertices ),
+	SModel terrain = SModel( terrainMesh, nVertices );
+	delete terrainMesh;
+	DModel water = DModel( waterMesh, nVertices );
+	delete waterMesh;
+
+	// Model array
+	int nModels = 2;
+	SModel models[] = {
+		terrain,
+		water,
 	};
-	delete terrainMesh, waterMesh;
 
 	// Main loop
 	float lastTime = glfwGetTime();
@@ -116,6 +123,19 @@ int main()
 		// Use program shaders
 		glUseProgram(programID);
 
+		// ANIMATION
+
+		// Water
+		float *waterMap = new float[nVertices];
+		terrain::generateWaterMap(width, 2, 2.2, waterMap, (int)(currentTime*5));
+
+		float *waterMesh = new float[nVertices*6];
+		meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
+		delete waterMap;
+
+		water.setVertexData(waterMesh, nVertices);
+		delete waterMesh;
+		
 		// COMMON TRANSFORMATIONS
 
 		// View
@@ -129,8 +149,7 @@ int main()
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		// MODELS
-
-		for(int i=0; i<sizeof(models)/sizeof(models[0]); i++)
+		for(int i=0; i<nModels; i++)
 		{
 			// Model position
 			glm::mat4 position = glm::mat4(1.0f);

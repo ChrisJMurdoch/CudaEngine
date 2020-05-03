@@ -23,6 +23,7 @@
 #include "..\..\include\logger\log.hpp"
 #include "..\..\include\models\cube.hpp"
 #include "..\..\include\models\meshgen.hpp"
+#include "..\..\include\models\model.hpp"
 #include "..\..\include\models\terrain.hpp"
 
 
@@ -60,28 +61,29 @@ int main()
 		return -1;
 	}
 
-	// Create terrain models
+	// Generate terrain
 	const int width = 180;
 	const float height = 20;
 	const float freq = 0.5;
 
 	float *terrainMap = terrain::generateHeightMap(width, 0, height, freq);
 	float *waterMap = terrain::generateWaterMap(width, 2, 2.2);
+
 	float *terrainMesh = meshgen::generateVertices(terrainMap, width, false);
+	delete terrainMap;
 	float *waterMesh = meshgen::generateVertices(waterMap, width, true);
-	int nVertices = pow(width-1, 2) * 6;
+	delete waterMap;
 
-	// Models
-	GLuint terrainVAO, waterVAO, terrainVBO, waterVBO;
-	createBuffers( terrainMesh, nVertices * 6*sizeof(float), terrainVAO, terrainVBO );
-	createBuffers( waterMesh, nVertices * 6*sizeof(float), waterVAO, waterVBO );
-	GLuint models[] = {
-		terrainVAO,
-		waterVAO,
+	int nVertices = pow(width-1, 2) * 6; // Same for both
+
+	// Create models
+	Model models[] = {
+		Model( terrainMesh, nVertices ),
+		Model( waterMesh, nVertices ),
 	};
+	delete terrainMesh;
+	delete waterMesh;
 
-	// Create buffer and array objects
-	
 	// Main loop
 	float lastTime = glfwGetTime();
 	while( !glfwWindowShouldClose(window) )
@@ -127,17 +129,14 @@ int main()
 
 		for(int i=0; i<sizeof(models)/sizeof(models[0]); i++)
 		{
-			// Bind VAO
-			glBindVertexArray(models[i]);
-
 			// Model position
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
+			glm::mat4 position = glm::mat4(1.0f);
+			position = glm::scale(position, glm::vec3(0.1, 0.1, 0.1));
 			modelLoc = glGetUniformLocation(programID, "model");
-			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
 
-			// Draw
-			glDrawArrays(GL_TRIANGLES, 0, nVertices);
+			// Render
+			models[i].render();
 		}
 
 		// Unbind VAO
@@ -149,12 +148,7 @@ int main()
 	}
 
 	// Cleanup
-	glDeleteVertexArrays(1, &terrainVAO);
-	glDeleteBuffers(1, &terrainVBO);
-	glDeleteVertexArrays(1, &waterVAO);
-	glDeleteBuffers(1, &waterVBO);
 	glDeleteProgram(programID);
-
 	glfwTerminate();
 
 	return 0;
@@ -263,31 +257,6 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 		pitch =  89.0f;
 	if(pitch < -89.0f)
 		pitch = -89.0f;
-}
-
-void createBuffers(float vertices[], int nVertices, GLuint &VAO, GLuint &VBO)
-{
-	// Generate buffers
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	// Bind objects
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	// Copy over buffer data
-	glBufferData(GL_ARRAY_BUFFER, nVertices, vertices, GL_STATIC_DRAW);
-
-	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// Colour attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// Unbind buffers and array
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection)

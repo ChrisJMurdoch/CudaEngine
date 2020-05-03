@@ -2,7 +2,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-#include "..\..\include\models\terrain.hpp"
+#include "..\..\include\generation\terrain.hpp"
 
 namespace terrain
 {
@@ -11,11 +11,10 @@ namespace terrain
         return ( sin( x * (2*M_PI) / period ) + 1 ) / 2;
     }
     
-    float *generateHeightMap(int width, float min, float max, float period)
+    float *generateHeightMap(int width, float min, float max, float *out, float period)
     {
         srand(1);
         int n = pow(width, 2);
-        float *terrain = new float[n];
 
         for (int y=0; y<width; y++)
         {
@@ -25,7 +24,7 @@ namespace terrain
 
                 if ( y==0 || y==width-1 || x==0 || x==width-1 )
                 {
-                    terrain[i] = 0;
+                    out[i] = 0;
                     continue;
                 }
 
@@ -49,17 +48,16 @@ namespace terrain
                     .5 * spike
                 ) / 100;
 
-                terrain[i] = min + ( (max-min) * blend );
+                out[i] = min + ( (max-min) * blend );
             }
         }
-        return terrain;
+        return out;
     }
 
-    float *generateWaterMap(int width, float min, float max, unsigned int seed)
+    float *generateWaterMap(int width, float min, float max, float *out, unsigned int seed)
     {
         srand(seed);
         int n = pow(width, 2);
-        float *terrain = new float[n];
 
         for (int y=0; y<width; y++)
         {
@@ -68,13 +66,13 @@ namespace terrain
                 int i = y*width + x;
                 if ( y==0 || y==width-1 || x==0 || x==width-1 )
                 {
-                    terrain[i] = 0;
+                    out[i] = 0;
                     continue;
                 }
                 float spike = (float)rand() / (float)RAND_MAX;
-                terrain[i] = min + ( (max-min) * spike );
+                out[i] = min + ( (max-min) * spike );
             }
         }
-        return terrain;
+        return out;
     }
 }

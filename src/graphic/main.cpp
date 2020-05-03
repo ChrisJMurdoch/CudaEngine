@@ -20,11 +20,10 @@
 // Engine
 #include "..\..\include\graphic\main.hpp"
 #include "..\..\include\graphic\util.hpp"
+#include "..\..\include\generation\meshgen.hpp"
+#include "..\..\include\generation\terrain.hpp"
 #include "..\..\include\logger\log.hpp"
-#include "..\..\include\models\cube.hpp"
-#include "..\..\include\models\meshgen.hpp"
 #include "..\..\include\models\model.hpp"
-#include "..\..\include\models\terrain.hpp"
 
 
 // === CONSTANTS ===
@@ -61,28 +60,32 @@ int main()
 		return -1;
 	}
 
-	// Generate terrain
+	// Terrain data
 	const int width = 180;
 	const float height = 20;
 	const float freq = 0.5;
+	int nVertices = pow(width-1, 2) * 6;
 
-	float *terrainMap = terrain::generateHeightMap(width, 0, height, freq);
-	float *waterMap = terrain::generateWaterMap(width, 2, 2.2);
-
-	float *terrainMesh = meshgen::generateVertices(terrainMap, width, false);
+	// Terrain mesh
+	float *terrainMap = new float[nVertices];
+	terrain::generateHeightMap(width, 0, height, terrainMap, freq);
+	float *terrainMesh = new float[nVertices*6];
+	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
 	delete terrainMap;
-	float *waterMesh = meshgen::generateVertices(waterMap, width, true);
-	delete waterMap;
 
-	int nVertices = pow(width-1, 2) * 6; // Same for both
+	// Water mesh
+	float *waterMap = new float[nVertices];
+	terrain::generateWaterMap(width, 2, 2.2, waterMap);
+	float *waterMesh = new float[nVertices*6];
+	meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
+	delete waterMap;
 
 	// Create models
 	Model models[] = {
 		Model( terrainMesh, nVertices ),
 		Model( waterMesh, nVertices ),
 	};
-	delete terrainMesh;
-	delete waterMesh;
+	delete terrainMesh, waterMesh;
 
 	// Main loop
 	float lastTime = glfwGetTime();

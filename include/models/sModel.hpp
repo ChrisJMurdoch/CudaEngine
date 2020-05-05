@@ -12,8 +12,14 @@ protected:
     // Mesh data
     GLuint VAO, VBO;
     int nVertices;
+
+protected:
+    /** To be internally chained with a GL_*_DRAW enum */
+    SModel(float *vertexData, int nVertices, GLenum usage);
+
 public:
-    SModel(float *vertexData, int nVertices, bool dynamic=false);
+    /** Chains to protected ctor with GL_STATIC_DRAW */
+    SModel(float *vertexData, int nVertices);
     void render();
     ~SModel();
 };

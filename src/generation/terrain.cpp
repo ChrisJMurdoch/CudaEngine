@@ -54,9 +54,9 @@ namespace terrain
         return out;
     }
 
-    float *generateWaterMap(int width, float min, float max, float *out, unsigned int seed)
+    float *generateWaterMap(int width, float min, float max, float *out)
     {
-        srand(seed);
+        srand(0);
         int n = pow(width, 2);
 
         for (int y=0; y<width; y++)
@@ -71,6 +71,28 @@ namespace terrain
                 }
                 float spike = (float)rand() / (float)RAND_MAX;
                 out[i] = min + ( (max-min) * spike );
+            }
+        }
+        return out;
+    }
+    
+    float *generateMovingWaterMap(int width, float min, float max, float *out, float waveheight, float time)
+    {
+        srand(0);
+        int n = pow(width, 2);
+
+        for (int y=0; y<width; y++)
+        {
+            for (int x=0; x<width; x++)
+            {
+                int i = y*width + x;
+                if ( y==0 || y==width-1 || x==0 || x==width-1 )
+                {
+                    out[i] = 0;
+                    continue;
+                }
+                float spike = (float)rand() / (float)RAND_MAX;
+                out[i] = min + ( (max-min) * spike ) + ( waveheight * modSin(x+time, 30) );
             }
         }
         return out;

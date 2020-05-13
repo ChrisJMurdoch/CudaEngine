@@ -72,7 +72,7 @@ int main()
 
 	// Water mesh
 	float *waterMap = new float[nVertices];
-	terrain::generateWaterMap(width, 2, 2.2, waterMap);
+	terrain::generateMovingWaterMap(width, 2, 2.2, waterMap, 0.5, 0);
 	float *waterMesh = new float[nVertices*6];
 	meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
 	delete waterMap;
@@ -123,7 +123,7 @@ int main()
 
 		// Water
 		float *waterMap = new float[nVertices];
-		terrain::generateWaterMap(width, 2, 2.2, waterMap, (int)(currentTime*5));
+		terrain::generateMovingWaterMap(width, 2, 2.2, waterMap, 0.5, currentTime*5);
 
 		float *waterMesh = new float[nVertices*6];
 		meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);

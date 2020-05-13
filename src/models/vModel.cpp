@@ -1,14 +1,11 @@
 
 #include <glad/glad.h>
 
-#include "..\..\include\models\sModel.hpp"
+#include "..\..\include\models\vModel.hpp"
 
-SModel::SModel(float *vertexData, int nVertices) : SModel(vertexData, nVertices, GL_STATIC_DRAW) {}
-
-SModel::SModel(float *vertexData, int nVertices, GLenum usage)
+VModel::VModel(int nVertices, float *vertexData, GLenum usage) : Model(nVertices, usage)
 {
 	// Initialise member variables
-    this->nVertices = nVertices;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 
@@ -32,14 +29,24 @@ SModel::SModel(float *vertexData, int nVertices, GLenum usage)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void SModel::render()
+void VModel::bufferData(float *vertexData)
+{
+	if ( usage != GL_DYNAMIC_DRAW && usage != GL_STREAM_DRAW )
+		throw "Buffer not rewritable.";
+	
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, nVertices*STRIDE, vertexData);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void VModel::render()
 {
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, nVertices);
     glBindVertexArray(0);
 }
 
-SModel::~SModel()
+VModel::~VModel()
 {
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);

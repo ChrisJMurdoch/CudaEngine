@@ -8,10 +8,6 @@
 // Window creation
 #include <GLFW/glfw3.h>
 
-// Image loading
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 // Vector math
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -23,8 +19,8 @@
 #include "..\..\include\generation\meshgen.hpp"
 #include "..\..\include\generation\terrain.hpp"
 #include "..\..\include\logger\log.hpp"
-#include "..\..\include\models\dModel.hpp"
-#include "..\..\include\models\sModel.hpp"
+#include "..\..\include\models\vModel.hpp"
+#include "..\..\include\models\eModel.hpp"
 
 
 // === CONSTANTS ===
@@ -82,14 +78,14 @@ int main()
 	delete waterMap;
 
 	// Create models
-	SModel terrain = SModel( terrainMesh, nVertices );
+	VModel terrain = VModel( nVertices, terrainMesh, GL_STATIC_DRAW );
 	delete terrainMesh;
-	DModel water = DModel( waterMesh, nVertices );
+	VModel water = VModel( nVertices, waterMesh, GL_STREAM_DRAW );
 	delete waterMesh;
 
 	// Model array
 	int nModels = 2;
-	SModel models[] = {
+	VModel models[] = {
 		terrain,
 		water,
 	};
@@ -133,7 +129,7 @@ int main()
 		meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
 		delete waterMap;
 
-		water.setVertexData(waterMesh, nVertices);
+		water.bufferData(waterMesh);
 		delete waterMesh;
 		
 		// COMMON TRANSFORMATIONS

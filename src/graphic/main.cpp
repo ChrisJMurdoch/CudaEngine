@@ -84,11 +84,10 @@ int main()
 	delete waterMesh;
 
 	// Model array
-	int nModels = 2;
-	VModel models[] = {
-		terrain,
-		water,
-	};
+	const int nModels = 2;
+	Model *models[nModels];
+	models[0] = &terrain;
+	models[1] = &water;
 
 	// Main loop
 	float lastTime = glfwGetTime();
@@ -154,7 +153,7 @@ int main()
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
 
 			// Render
-			models[i].render();
+			models[i]->render();
 		}
 
 		// Unbind VAO

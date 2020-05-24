@@ -6,7 +6,7 @@
 #include "..\..\include\models\model.hpp"
 
 /** EBO mesh model */
-class EModel : Model
+class EModel : public Model
 {
 private:
     // Mesh data

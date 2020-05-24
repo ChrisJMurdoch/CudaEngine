@@ -3,7 +3,7 @@
 
 namespace terrain
 {
-    float *generateHeightMap(int width, float min, float max, float *out, float period=1);
-    float *generateWaterMap(int width, float min, float max, float *out);
-    float *generateMovingWaterMap(int width, float min, float max, float *out, float waveheight, float time);
+    float sinXY(int x, int y, float period);
+    float hashXY(int x, int y, float period);
+    float *generateHeightMap(int width, float min, float max, float *out, float (*func)(int, int, float), float period = 10);
 }

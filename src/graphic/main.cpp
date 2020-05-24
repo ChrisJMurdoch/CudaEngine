@@ -8,7 +8,7 @@
 // Window creation
 #include <GLFW/glfw3.h>
 
-// Vector math
+// Math
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -59,20 +59,20 @@ int main()
 
 	// Terrain data
 	const int width = 180;
-	const float height = 20;
-	const float freq = 0.5;
+	const float tMin = 0, tMax = 20, tPeriod = 100;
+	const float wMin = 2, wMax =  2.3, wPeriod =  25;
 	int nVertices = pow(width-1, 2) * 6;
 
 	// Terrain mesh
 	float *terrainMap = new float[nVertices];
-	terrain::generateHeightMap(width, 0, height, terrainMap, freq);
+	terrain::generateHeightMap(width, tMin, tMax, terrainMap, terrain::sinXY, tPeriod);
 	float *terrainMesh = new float[nVertices*6];
 	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
 	delete terrainMap;
 
 	// Water mesh
 	float *waterMap = new float[nVertices];
-	terrain::generateMovingWaterMap(width, 2, 2.2, waterMap, 0.5, 0);
+	terrain::generateHeightMap(width, wMin, wMax, waterMap, terrain::hashXY, wPeriod);
 	float *waterMesh = new float[nVertices*6];
 	meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
 	delete waterMap;
@@ -118,19 +118,6 @@ int main()
 		// Use program shaders
 		glUseProgram(programID);
 
-		// ANIMATION
-
-		// Water
-		float *waterMap = new float[nVertices];
-		terrain::generateMovingWaterMap(width, 2, 2.2, waterMap, 0.5, currentTime*5);
-
-		float *waterMesh = new float[nVertices*6];
-		meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
-		delete waterMap;
-
-		water.bufferData(waterMesh);
-		delete waterMesh;
-		
 		// COMMON TRANSFORMATIONS
 
 		// View
@@ -243,9 +230,9 @@ int initGLAD(GLFWwindow *window)
 	return 0;
 }
 
-void resizeCallback(GLFWwindow *window, int width, int height)
+void resizeCallback(GLFWwindow *window, int width, int tMax)
 {
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, width, tMax);
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos)

@@ -58,21 +58,21 @@ int main()
 	}
 
 	// Terrain data
-	const int width = 180;
-	const float tMin = 0, tMax = 20, tPeriod = 100;
-	const float wMin = 2, wMax =  2.3, wPeriod =  25;
+	const int width = 300;
+	const float tMin = -10, tMax = 20, tPeriod = 20;
+	const float wMin = 0, wMax =  1, wPeriod =  3;
 	int nVertices = pow(width-1, 2) * 6;
 
 	// Terrain mesh
 	float *terrainMap = new float[nVertices];
-	terrain::generateHeightMap(width, tMin, tMax, terrainMap, terrain::sinXY, tPeriod);
+	terrain::generateHeightMap(width, tMin, tMax, terrainMap, terrain::perlin, tPeriod);
 	float *terrainMesh = new float[nVertices*6];
 	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
 	delete terrainMap;
 
 	// Water mesh
 	float *waterMap = new float[nVertices];
-	terrain::generateHeightMap(width, wMin, wMax, waterMap, terrain::hashXY, wPeriod);
+	terrain::generateHeightMap(width, wMin, wMax, waterMap, terrain::perlin, wPeriod);
 	float *waterMesh = new float[nVertices*6];
 	meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
 	delete waterMap;

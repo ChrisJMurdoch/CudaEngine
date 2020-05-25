@@ -3,24 +3,86 @@
 #include <functional>
 #include <cmath>
 
+#include <glm/glm.hpp>
+
 #include "..\..\include\generation\terrain.hpp"
 #include "..\..\include\logger\log.hpp"
 
 namespace terrain
 {
+    // NUMBER GENERATION
+
+    template <class T>
+    int centHash(T x)
+    {
+        static std::hash<T> hash;
+        return ( hash(x) % 201 ) - 100;
+    }
+
+    template <class T>
+    int combine(T x, T y) {
+        return (x*12345) + y;
+    }
+
+    float lerp(float a, float b, float x)
+    {
+        return a + x * (b - a);
+    }
+
+    float fade(float x) {
+        return x * x * x * (x * (x * 6 - 15) + 10);
+    }
+
     // SAMPLING
 
-    float sinXY(int x, int y, float period)
+    float msin(int x, int y, float period)
     {
         float xd = ( sin( x * (2*M_PI) / period ) + 1 ) / 2;
         float yd = ( sin( y * (2*M_PI) / period ) + 1 ) / 2;
         return xd * yd;
     }
 
-    float hashXY(int x, int y, float period)
+    float hash(int x, int y, float period)
     {
-        static std::hash<int> hash;
-        return ( hash( x*x*y ) % 1001 ) / 1000.0f;
+        return centHash( combine(x, y) ) / 100.0f;
+    }
+
+    float perlin(int x, int y, float period)
+    {
+        // Square index
+        int X = std::floor( x / period );
+        int Y = std::floor( y / period );
+
+        // Normal relative position
+        float rx = (x/period) - X;
+        float ry = (y/period) - Y;
+
+        // Square corner vectors
+        glm::vec2 BL = glm::normalize( glm::vec2( centHash( combine( X , Y ) ), centHash( combine( X , Y )+1 ) ) );
+        glm::vec2 BR = glm::normalize( glm::vec2( centHash( combine(X+1, Y ) ), centHash( combine(X+1, Y )+1 ) ) );
+        glm::vec2 TL = glm::normalize( glm::vec2( centHash( combine( X ,Y+1) ), centHash( combine( X ,Y+1)+1 ) ) );
+        glm::vec2 TR = glm::normalize( glm::vec2( centHash( combine(X+1,Y+1) ), centHash( combine(X+1,Y+1)+1 ) ) );
+
+        // Relational vectors
+        glm::vec2 point = glm::vec2( rx, ry );
+        glm::vec2 BLr = glm::vec2( 0, 0 ) - point;
+        glm::vec2 BRr = glm::vec2( 1, 0 ) - point;
+        glm::vec2 TLr = glm::vec2( 0, 1 ) - point;
+        glm::vec2 TRr = glm::vec2( 1, 1 ) - point;
+
+        // Dot products
+        float BLd = glm::dot( BL, BLr );
+        float BRd = glm::dot( BR, BRr );
+        float TLd = glm::dot( TL, TLr );
+        float TRd = glm::dot( TR, TRr );
+
+        // Interpolate
+        float bottom = lerp( BLd, BRd, fade(point.x) );
+        float top = lerp( TLd, TRd, fade(point.x) );
+        float centre = lerp( bottom, top, fade(point.y) );
+
+        // (-1), 1  =>  0, 1
+        return (centre+1) / 2;
     }
 
     // GENERATION

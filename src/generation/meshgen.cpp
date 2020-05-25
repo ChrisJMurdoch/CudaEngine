@@ -111,16 +111,16 @@ namespace meshgen
             0.7
         ); // Water
 
-        else if (triY>10)
+        else if (triY>12)
             setColour( vertex, flat, stone, snow, 0.85, 0.9 ); // Snow
 
-        else if (triY>5)
+        else if (triY>9)
             setColour( vertex, flat, stone, stone, 0.85, 0.9 ); // Mountain
 
-        else if (triY>4)
+        else if (triY>6)
             setColour( vertex, flat, dirt, grass, 0.85, 0.9 ); // Grass
 
-        else if (triY>3)
+        else if (triY>2)
             setColour( vertex, flat, dirt, plains, 0.85, 0.9 ); // Plains
 
         else

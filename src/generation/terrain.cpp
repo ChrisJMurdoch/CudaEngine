@@ -29,8 +29,14 @@ namespace terrain
         return a + x * (b - a);
     }
 
-    float fade(float x) {
+    float fade(float x)
+    {
         return x * x * x * (x * (x * 6 - 15) + 10);
+    }
+
+    float falloff(float x)
+    {
+        return pow( sin(x*M_PI), 0.05 );
     }
 
     // SAMPLING
@@ -107,6 +113,10 @@ namespace terrain
 
                 if ( ol != 1 )
                     height -= ( min + ( (max-min) * 0.5 ) ) * op;
+
+                // Dropoff
+                float unitX = (float)x / width, unitY = (float)y / width;
+                height *= falloff(unitX) * falloff(unitY);
             }
 
             out[i] = height;

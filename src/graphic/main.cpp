@@ -58,9 +58,9 @@ int main()
 	}
 
 	// Terrain data
-	const int width = 500;
-	const float tMin = -20, tMax = 20, tPeriod = 40;
-	const float wMin = -0.1, wMax =  0.1, wPeriod =  3;
+	const int width = 1000;
+	const float tMin = -15, tMax = 20, tPeriod = 40;
+	const float wMin = 1, wMax =  1.2, wPeriod =  3;
 	int nVertices = pow(width-1, 2) * 6;
 
 	// Terrain mesh

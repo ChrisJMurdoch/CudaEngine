@@ -87,14 +87,29 @@ namespace terrain
 
     // GENERATION
     
-    float *generateHeightMap(int width, float min, float max, float *out, float (*sampler)(int, int, float), float period)
+    float *generateHeightMap(int width, float min, float max, float *out, float (*sampler)(int, int, float), float period, int octaves)
     {
+        const float lacunarity = 2;
+        const float persistance = 0.4;
+
         int n = pow(width, 2);
 
         for (int y=0; y<width; y++) for (int x=0; x<width; x++)
         {
             int i = y*width + x;
-            out[i] = min + ( (max-min) * sampler(x, y, period) );
+
+            float height = 0;
+            for (int o=0; o<octaves; o++)
+            {
+                float ol = pow(lacunarity, o);
+                float op = pow(persistance, o);
+                height += ( min + ( (max-min) * sampler(x, y, period/ol) ) ) * op;
+
+                if ( ol != 1 )
+                    height -= ( min + ( (max-min) * 0.5 ) ) * op;
+            }
+
+            out[i] = height;
         }
         
         return out;

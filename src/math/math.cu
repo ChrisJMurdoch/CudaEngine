@@ -5,8 +5,9 @@
 
 #include "kernels.cu"
 
-#define WARPS 8
-#define STREAMS 8
+#define STREAMS 12
+#define WARPS2D 4
+#define WARPS WARPS2D*WARPS2D
 
 // DEVICE SETUP
 
@@ -141,6 +142,16 @@ void cudamath::transpose(int *in, int *out, int height, int width)
     kernels::transpose<<<1, height*width>>>(d_in, d_out, height, width);
     cudaCheck( cudaMemcpy(out, d_out, height*width*sizeof(int), cudaMemcpyDeviceToHost) );
     multiCudaFree(d_in, d_out);
+}
+
+void cudamath::generatePerlinHeightMap(int dimension, float min, float max, float *out, float period)
+{
+    // Allocate device memory
+    float *d_out;
+    cudaCheck( cudaMalloc( (void **)&d_out, dimension*dimension*sizeof(float) ) );
+    kernels::perlinSample<<<sm, WARPS*32>>>(d_out, dimension, min, max, period);
+    cudaCheck( cudaMemcpy(out, d_out, dimension*dimension*sizeof(float), cudaMemcpyDeviceToHost) );
+    cudaCheck( cudaFree(d_out) );
 }
 
 // MACROS

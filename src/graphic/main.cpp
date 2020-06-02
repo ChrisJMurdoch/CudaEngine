@@ -21,7 +21,9 @@
 #include "..\..\include\logger\log.hpp"
 #include "..\..\include\models\vModel.hpp"
 #include "..\..\include\models\eModel.hpp"
+#include "..\..\include\math\math.hpp"
 
+#include <string.h>
 
 // === CONSTANTS ===
 
@@ -45,8 +47,24 @@ glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 
 // === FUNCTIONS ===
 
-int main()
+int main( int argc, char *argv[] )
 {
+	// Determine hardware acceleration
+	bool hardware;
+	if ( argc>1 && strcmp( argv[1], "cuda" )==0 )
+	{
+		Log::print( Log::message, "Using Cuda acceleration" );
+		hardware = true;
+	}
+	else
+	{
+		Log::print( Log::message, "Not using Cuda acceleration" );
+		hardware = false;
+	}
+
+	// Start timer
+	float startLoadTime = glfwGetTime();
+
 	// Initialise graphics
 	GLFWwindow *window = NULL;
 	GLuint programID;
@@ -58,14 +76,19 @@ int main()
 	}
 
 	// Terrain data
-	const int width = 1000;
-	const float tMin = -15, tMax = 20, tPeriod = 40;
+	const int width = 3000;
+	const float tMin = -15, tMax = 20, tPeriod = 20;
 	const float wMin = 1, wMax =  1.2, wPeriod =  3;
 	int nVertices = pow(width-1, 2) * 6;
 
 	// Terrain mesh
 	float *terrainMap = new float[nVertices];
-	terrain::generateHeightMap(width, tMin, tMax, terrainMap, terrain::perlin, tPeriod, 10);
+
+	if ( hardware )
+		cudamath::generatePerlinHeightMap(width, tMin, tMax, terrainMap, tPeriod);
+	else
+		terrain::generateHeightMap(width, tMin, tMax, terrainMap, terrain::perlin, tPeriod, 1);
+
 	float *terrainMesh = new float[nVertices*6];
 	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
 	delete terrainMap;
@@ -88,6 +111,13 @@ int main()
 	Model *models[nModels];
 	models[0] = &terrain;
 	models[1] = &water;
+
+	// End timer
+	float endLoadTime = glfwGetTime();
+
+	// Display
+	Log::print( Log::message, "Loading time: ", Log::NO_NEWLINE);
+	Log::print( Log::message, endLoadTime - startLoadTime, Log::NEWLINE);
 
 	// Main loop
 	float lastTime = glfwGetTime();

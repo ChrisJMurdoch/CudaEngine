@@ -15,8 +15,10 @@ namespace terrain
     template <class T>
     int centHash(T x)
     {
-        static std::hash<T> hash;
-        return ( hash(x) % 201 ) - 100;
+        x = ((x >> 16) ^ x) * 73244475;
+        x = ((x >> 16) ^ x) * 73244475;
+        x = (x >> 16) ^ x;
+        return ( x % 201 ) - 100;
     }
 
     template <class T>

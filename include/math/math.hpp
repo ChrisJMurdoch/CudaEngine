@@ -27,6 +27,9 @@ public:
 
     /** Transposes a matrix, monolithic */
     static void transpose(int *in, int *out, int height, int width);
+
+    /** Create heightmap on gpu */
+    static void cudamath::generatePerlinHeightMap(int dimension, float min, float max, float *out, float period);
 };
 
 /** Error checking function for cuda calls */

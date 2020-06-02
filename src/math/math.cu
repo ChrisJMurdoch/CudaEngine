@@ -1,13 +1,18 @@
 
+#include <functional>
 #include <iostream>
+#include <cmath>
+
+#include "cuda.h"
+#define GLM_FORCE_CUDA
+#include <glm/glm.hpp>
 
 #include "..\..\include\math\math.hpp"
-
-#include "kernels.cu"
 
 #define STREAMS 12
 #define WARPS2D 4
 #define WARPS WARPS2D*WARPS2D
+#define M_PI 3.14159265358979323846
 
 // DEVICE SETUP
 
@@ -17,131 +22,89 @@ void cudamath::initDevice()
     cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
 }
 
-// VECTOR ADDITION
+// HEIGHTMAP GENERATION
 
-void cudamath::vectorAdd(int *a, int *b, int *c, int n)
+__device__
+int centHash(int x)
 {
-    // Allocate device memory
-    int *d_a, *d_b, *d_c;
-    multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b, (void **)&d_c);
-    // Clip streams for small inputs
-    int realStreams = STREAMS<=n ? STREAMS : 1;
-    // Create stream array
-    cudaStream_t *streams = new cudaStream_t[realStreams];
-    int streamLength = (n + (n%realStreams)) / realStreams;
-    // For each stream
-    for (int i=0; i < realStreams; ++i)
-    {
-        int offset = i*streamLength;
-        int realsize = offset+streamLength>n ? n%streamLength : streamLength;
-        cudaCheck( cudaStreamCreate(&streams[i]) );
-        // Send data on stream
-        cudaCheck( cudaMemcpyAsync(&d_a[offset], &a[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
-        cudaCheck( cudaMemcpyAsync(&d_b[offset], &b[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
-        // Run kernel on stream
-        kernels::vectorAdd<<<sm, WARPS*32, 0, streams[i]>>>( &d_a[offset], &d_b[offset], &d_c[offset], realsize);
-        // Retrieve data on stream
-        cudaCheck( cudaMemcpyAsync(&c[offset], &d_c[offset], realsize*sizeof(int), cudaMemcpyDeviceToHost, streams[i]) );
-    }
-    cudaDeviceSynchronize();
-    multiCudaFree(d_a, d_b, d_c);
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return ( x % 201 ) - 100;
 }
 
-void cudamath::vectorInAdd(int *a, int *b, int n)
-{
-    // Allocate device memory
-    int *d_a, *d_b;
-    multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b);
-    // Clip streams for small inputs
-    int realStreams = STREAMS<=n ? STREAMS : 1;
-    // Create stream array
-    cudaStream_t *streams = new cudaStream_t[realStreams];
-    int streamLength = (n + (n%realStreams)) / realStreams;
-    // For each stream
-    for (int i=0; i < realStreams; ++i)
-    {
-        int offset = i*streamLength;
-        int realsize = offset+streamLength>n ? n%streamLength : streamLength;
-        cudaCheck( cudaStreamCreate(&streams[i]) );
-        // Send data on stream
-        cudaCheck( cudaMemcpyAsync(&d_a[offset], &a[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
-        cudaCheck( cudaMemcpyAsync(&d_b[offset], &b[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
-        // Run kernel on stream
-        kernels::vectorInAdd<<<sm, WARPS*32, 0, streams[i]>>>( &d_a[offset], &d_b[offset], realsize);
-        // Retrieve data on stream
-        cudaCheck( cudaMemcpyAsync(&a[offset], &d_a[offset], realsize*sizeof(int), cudaMemcpyDeviceToHost, streams[i]) );
-    }
-    cudaDeviceSynchronize();
-    multiCudaFree(d_a, d_b);
+__device__
+int combine(int x, int y) {
+    return (x*12345) + y;
 }
 
-// VECTOR SUBTRACTION
-
-void cudamath::vectorSub(int *a, int *b, int *c, int n)
+__device__
+float lerp(float a, float b, float x)
 {
-    // Allocate device memory
-    int *d_a, *d_b, *d_c;
-    multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b, (void **)&d_c);
-    // Clip streams for small inputs
-    int realStreams = STREAMS<=n ? STREAMS : 1;
-    // Create stream array
-    cudaStream_t *streams = new cudaStream_t[realStreams];
-    int streamLength = (n + (n%realStreams)) / realStreams;
-    // For each stream
-    for (int i=0; i < realStreams; ++i)
-    {
-        int offset = i*streamLength;
-        int realsize = offset+streamLength>n ? n%streamLength : streamLength;
-        cudaCheck( cudaStreamCreate(&streams[i]) );
-        // Send data on stream
-        cudaCheck( cudaMemcpyAsync(&d_a[offset], &a[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
-        cudaCheck( cudaMemcpyAsync(&d_b[offset], &b[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
-        // Run kernel on stream
-        kernels::vectorSub<<<sm, WARPS*32, 0, streams[i]>>>( &d_a[offset], &d_b[offset], &d_c[offset], realsize);
-        // Retrieve data on stream
-        cudaCheck( cudaMemcpyAsync(&c[offset], &d_c[offset], realsize*sizeof(int), cudaMemcpyDeviceToHost, streams[i]) );
-    }
-    cudaDeviceSynchronize();
-    multiCudaFree(d_a, d_b, d_c);
+    return a + x * (b - a);
 }
 
-void cudamath::vectorInSub(int *a, int *b, int n)
+__device__
+float fade(float x)
 {
-    // Allocate device memory
-    int *d_a, *d_b;
-    multiCudaMalloc(n*sizeof(int), (void **)&d_a, (void **)&d_b);
-    // Clip streams for small inputs
-    int realStreams = STREAMS<=n ? STREAMS : 1;
-    // Create stream array
-    cudaStream_t *streams = new cudaStream_t[realStreams];
-    int streamLength = (n + (n%realStreams)) / realStreams;
-    // For each stream
-    for (int i=0; i < realStreams; ++i)
-    {
-        int offset = i*streamLength;
-        int realsize = offset+streamLength>n ? n%streamLength : streamLength;
-        cudaCheck( cudaStreamCreate(&streams[i]) );
-        // Send data on stream
-        cudaCheck( cudaMemcpyAsync(&d_a[offset], &a[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
-        cudaCheck( cudaMemcpyAsync(&d_b[offset], &b[offset], realsize*sizeof(int), cudaMemcpyHostToDevice, streams[i]) );
-        // Run kernel on stream
-        kernels::vectorInSub<<<sm, WARPS*32, 0, streams[i]>>>( &d_a[offset], &d_b[offset], realsize);
-        // Retrieve data on stream
-        cudaCheck( cudaMemcpyAsync(&a[offset], &d_a[offset], realsize*sizeof(int), cudaMemcpyDeviceToHost, streams[i]) );
-    }
-    cudaDeviceSynchronize();
-    multiCudaFree(d_a, d_b);
+    return x * x * x * (x * (x * 6 - 15) + 10);
 }
 
-void cudamath::transpose(int *in, int *out, int height, int width)
+__global__
+void perlinSample(float *out, int dimension, float min, float max, float period)
 {
-    // Allocate device memory
-    int *d_in, *d_out;
-    multiCudaMalloc(height*width*sizeof(int), (void **)&d_in, (void **)&d_out);
-    cudaCheck( cudaMemcpy(d_in, in, height*width*sizeof(int), cudaMemcpyHostToDevice) );
-    kernels::transpose<<<1, height*width>>>(d_in, d_out, height, width);
-    cudaCheck( cudaMemcpy(out, d_out, height*width*sizeof(int), cudaMemcpyDeviceToHost) );
-    multiCudaFree(d_in, d_out);
+    
+    // Start index
+    int startIndex = threadIdx.x + blockIdx.x * blockDim.x;
+
+    // Stride
+    int index = startIndex;
+    int x, y;
+    do
+    {
+        // Thread calculation
+        x = index % dimension;
+        y = index / dimension;
+
+        // Square index
+        int X = std::floor( x / period );
+        int Y = std::floor( y / period );
+
+        // Normal relative position
+        float rx = (x/period) - X;
+        float ry = (y/period) - Y;
+
+        // Square corner vectors
+        glm::vec2 BL = glm::normalize( glm::vec2( centHash( combine( X , Y ) ), centHash( combine( X , Y )+1 ) ) );
+        glm::vec2 BR = glm::normalize( glm::vec2( centHash( combine(X+1, Y ) ), centHash( combine(X+1, Y )+1 ) ) );
+        glm::vec2 TL = glm::normalize( glm::vec2( centHash( combine( X ,Y+1) ), centHash( combine( X ,Y+1)+1 ) ) );
+        glm::vec2 TR = glm::normalize( glm::vec2( centHash( combine(X+1,Y+1) ), centHash( combine(X+1,Y+1)+1 ) ) );
+
+        // Relational vectors
+        glm::vec2 point = glm::vec2( rx, ry );
+        glm::vec2 BLr = glm::vec2( 0, 0 ) - point;
+        glm::vec2 BRr = glm::vec2( 1, 0 ) - point;
+        glm::vec2 TLr = glm::vec2( 0, 1 ) - point;
+        glm::vec2 TRr = glm::vec2( 1, 1 ) - point;
+
+        // Dot products
+        float BLd = glm::dot( BL, BLr );
+        float BRd = glm::dot( BR, BRr );
+        float TLd = glm::dot( TL, TLr );
+        float TRd = glm::dot( TR, TRr );
+
+        // Interpolate
+        float bottom = lerp( BLd, BRd, fade(point.x) );
+        float top = lerp( TLd, TRd, fade(point.x) );
+        float centre = lerp( bottom, top, fade(point.y) );
+
+        // Set value
+        out[index] = ( ((centre+1) / 2) * (max-min) ) + min;
+
+        // Stride
+        index += blockDim.x*gridDim.x;
+    }
+    while ( y<dimension );
 }
 
 void cudamath::generatePerlinHeightMap(int dimension, float min, float max, float *out, float period)
@@ -149,27 +112,27 @@ void cudamath::generatePerlinHeightMap(int dimension, float min, float max, floa
     // Allocate device memory
     float *d_out;
     cudaCheck( cudaMalloc( (void **)&d_out, dimension*dimension*sizeof(float) ) );
-    kernels::perlinSample<<<sm, WARPS*32>>>(d_out, dimension, min, max, period);
+    perlinSample<<<sm, WARPS*32>>>(d_out, dimension, min, max, period);
     cudaCheck( cudaMemcpy(out, d_out, dimension*dimension*sizeof(float), cudaMemcpyDeviceToHost) );
     cudaCheck( cudaFree(d_out) );
 }
 
 // MACROS
 
-inline void cudaCheck(cudaError_t err)
+inline void cudamath::cudaCheck(cudaError_t err)
 {
     if (err != cudaSuccess)
         std::cout << "Cuda error: " << cudaGetErrorString(err) << std::endl;
 }
 
-inline void multiCudaMalloc(int size, void **a, void **b, void **c)
+inline void cudamath::multiCudaMalloc(int size, void **a, void **b, void **c)
 {
     cudaCheck( cudaMalloc(a, size) );
     if (b != NULL) cudaCheck( cudaMalloc(b, size) );
     if (c != NULL) cudaCheck( cudaMalloc(c, size) );
 }
 
-inline void multiCudaFree(void *a, void *b, void *c)
+inline void cudamath::multiCudaFree(void *a, void *b, void *c)
 {
     cudaCheck( cudaFree(a) );
     if (b != NULL) cudaCheck( cudaFree(b) );

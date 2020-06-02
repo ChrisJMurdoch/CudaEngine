@@ -54,6 +54,7 @@ int main( int argc, char *argv[] )
 	if ( argc>1 && strcmp( argv[1], "cuda" )==0 )
 	{
 		Log::print( Log::message, "Using Cuda acceleration" );
+		cudamath::initDevice();
 		hardware = true;
 	}
 	else
@@ -76,7 +77,7 @@ int main( int argc, char *argv[] )
 	}
 
 	// Terrain data
-	const int width = 3000;
+	const int width = 1000;
 	const float tMin = -15, tMax = 20, tPeriod = 20;
 	const float wMin = 1, wMax =  1.2, wPeriod =  3;
 	int nVertices = pow(width-1, 2) * 6;

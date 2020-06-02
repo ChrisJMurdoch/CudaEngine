@@ -1,12 +1,18 @@
 
 # CudaEngine
 
-C++ hardware-accelerated graphic and math engine using **Nvidia Cuda**.
+C++ Terrain generation and rendering engine with optional hardware acceleration.
 
 ## Requirements
 
-This engine requires a **NVIDIA GPU** and has only been tested on **Windows 10**.
-
-**GLFW** is required to run this engine.
+**GLFW** dll is required to run this program.
 
 The **NVCC** Compiler is needed to compile the .cu kernel files.
+
+**NVIDIA Tesla** and up is required to run with hardware acceleration.
+
+## Running
+
+To run the engine with hardware acceleration, no command line arguments are required.
+
+To use the acceleration features, use "cuda" as the first command line argument.

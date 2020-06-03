@@ -17,11 +17,14 @@
 #include "..\..\include\graphic\main.hpp"
 #include "..\..\include\graphic\util.hpp"
 #include "..\..\include\generation\meshgen.hpp"
-#include "..\..\include\generation\terrain.hpp"
 #include "..\..\include\logger\log.hpp"
 #include "..\..\include\models\vModel.hpp"
 #include "..\..\include\models\eModel.hpp"
-#include "..\..\include\math\math.hpp"
+
+// Math engine
+#include "..\..\include\math\mathEngine.hpp"
+#include "..\..\include\math\gpuMathEngine.hpp"
+#include "..\..\include\math\cpuMathEngine.hpp"
 
 #include <string.h>
 
@@ -51,16 +54,16 @@ int main( int argc, char *argv[] )
 {
 	// Determine hardware acceleration
 	bool hardware;
+	MathEngine *math;
 	if ( argc>1 && strcmp( argv[1], "cuda" )==0 )
 	{
 		Log::print( Log::message, "Using Cuda acceleration" );
-		cudamath::initDevice();
-		hardware = true;
+		math = &GPUMathEngine();
 	}
 	else
 	{
 		Log::print( Log::message, "Not using Cuda acceleration" );
-		hardware = false;
+		math = &CPUMathEngine();
 	}
 
 	// Start timer
@@ -84,11 +87,7 @@ int main( int argc, char *argv[] )
 
 	// Terrain mesh
 	float *terrainMap = new float[nVertices];
-
-	if ( hardware )
-		cudamath::generatePerlinHeightMap(width, tMin, tMax, terrainMap, tPeriod);
-	else
-		terrain::generateHeightMap(width, tMin, tMax, terrainMap, terrain::perlin, tPeriod, 1);
+	math->generateHeightMap(width, tMin, tMax, terrainMap, MathEngine::perlin, tPeriod, 1);
 
 	float *terrainMesh = new float[nVertices*6];
 	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
@@ -96,7 +95,7 @@ int main( int argc, char *argv[] )
 
 	// Water mesh
 	float *waterMap = new float[nVertices];
-	terrain::generateHeightMap(width, wMin, wMax, waterMap, terrain::hash, wPeriod);
+	math->generateHeightMap(width, wMin, wMax, waterMap, MathEngine::hash, wPeriod, 1);
 	float *waterMesh = new float[nVertices*6];
 	meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
 	delete waterMap;

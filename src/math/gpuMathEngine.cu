@@ -3,11 +3,12 @@
 #include <iostream>
 #include <cmath>
 
+// GLM - Cuda interoperability
 #include "cuda.h"
 #define GLM_FORCE_CUDA
 #include <glm/glm.hpp>
 
-#include "..\..\include\math\math.hpp"
+#include "..\..\include\math\gpuMathEngine.hpp"
 
 #define STREAMS 12
 #define WARPS2D 4
@@ -16,16 +17,29 @@
 
 // DEVICE SETUP
 
-int cudamath::sm = 10; // Default to GTX1060 #SMs
-void cudamath::initDevice()
+GPUMathEngine::GPUMathEngine()
 {
-    cudaCheck( cudaDeviceGetAttribute(&sm, cudaDevAttrMultiProcessorCount, 0) );
+    cudaCheck( cudaDeviceGetAttribute(&nSM, cudaDevAttrMultiProcessorCount, 0) );
 }
 
-// HEIGHTMAP GENERATION
+// KERNELS
 
 __device__
-int centHash(int x)
+int k_combine(int x, int y) {
+    return (x*12345) + y;
+}
+
+__device__
+float k_hashFunction(int x)
+{
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return ( x % 101 ) / 100.0f;
+}
+
+__device__
+int k_centHash(int x)
 {
     x = ((x >> 16) ^ x) * 0x45d9f3b;
     x = ((x >> 16) ^ x) * 0x45d9f3b;
@@ -34,18 +48,13 @@ int centHash(int x)
 }
 
 __device__
-int combine(int x, int y) {
-    return (x*12345) + y;
-}
-
-__device__
-float lerp(float a, float b, float x)
+float k_lerp(float a, float b, float x)
 {
     return a + x * (b - a);
 }
 
 __device__
-float fade(float x)
+float k_fade(float x)
 {
     return x * x * x * (x * (x * 6 - 15) + 10);
 }
@@ -75,10 +84,10 @@ void perlinSample(float *out, int dimension, float min, float max, float period)
         float ry = (y/period) - Y;
 
         // Square corner vectors
-        glm::vec2 BL = glm::normalize( glm::vec2( centHash( combine( X , Y ) ), centHash( combine( X , Y )+1 ) ) );
-        glm::vec2 BR = glm::normalize( glm::vec2( centHash( combine(X+1, Y ) ), centHash( combine(X+1, Y )+1 ) ) );
-        glm::vec2 TL = glm::normalize( glm::vec2( centHash( combine( X ,Y+1) ), centHash( combine( X ,Y+1)+1 ) ) );
-        glm::vec2 TR = glm::normalize( glm::vec2( centHash( combine(X+1,Y+1) ), centHash( combine(X+1,Y+1)+1 ) ) );
+        glm::vec2 BL = glm::normalize( glm::vec2( k_centHash( k_combine( X , Y ) ), k_centHash( k_combine( X , Y )+1 ) ) );
+        glm::vec2 BR = glm::normalize( glm::vec2( k_centHash( k_combine(X+1, Y ) ), k_centHash( k_combine(X+1, Y )+1 ) ) );
+        glm::vec2 TL = glm::normalize( glm::vec2( k_centHash( k_combine( X ,Y+1) ), k_centHash( k_combine( X ,Y+1)+1 ) ) );
+        glm::vec2 TR = glm::normalize( glm::vec2( k_centHash( k_combine(X+1,Y+1) ), k_centHash( k_combine(X+1,Y+1)+1 ) ) );
 
         // Relational vectors
         glm::vec2 point = glm::vec2( rx, ry );
@@ -94,9 +103,9 @@ void perlinSample(float *out, int dimension, float min, float max, float period)
         float TRd = glm::dot( TR, TRr );
 
         // Interpolate
-        float bottom = lerp( BLd, BRd, fade(point.x) );
-        float top = lerp( TLd, TRd, fade(point.x) );
-        float centre = lerp( bottom, top, fade(point.y) );
+        float bottom = k_lerp( BLd, BRd, k_fade(point.x) );
+        float top = k_lerp( TLd, TRd, k_fade(point.x) );
+        float centre = k_lerp( bottom, top, k_fade(point.y) );
 
         // Set value
         out[index] = ( ((centre+1) / 2) * (max-min) ) + min;
@@ -107,32 +116,68 @@ void perlinSample(float *out, int dimension, float min, float max, float period)
     while ( y<dimension );
 }
 
-void cudamath::generatePerlinHeightMap(int dimension, float min, float max, float *out, float period)
+__global__
+void hashSample(float *out, int dimension, float min, float max, float period)
+{
+    
+    // Start index
+    int startIndex = threadIdx.x + blockIdx.x * blockDim.x;
+
+    // Stride
+    int index = startIndex;
+    int y;
+    do
+    {
+        y = index / dimension;
+
+        // Set value
+        out[index] = min + ( k_hashFunction(index) * (max-min) );
+
+        // Stride
+        index += blockDim.x*gridDim.x;
+    }
+    while ( y<dimension );
+}
+
+// FUNCTIONS
+
+void GPUMathEngine::generateHeightMap(int dimension, float min, float max, float *out, Sample sample, float period, int octaves)
 {
     // Allocate device memory
     float *d_out;
     cudaCheck( cudaMalloc( (void **)&d_out, dimension*dimension*sizeof(float) ) );
-    perlinSample<<<sm, WARPS*32>>>(d_out, dimension, min, max, period);
+    switch ( sample )
+    {
+    case hash:
+        hashSample<<<nSM, WARPS*32>>>(d_out, dimension, min, max, period);
+        break;
+    case perlin:
+        perlinSample<<<nSM, WARPS*32>>>(d_out, dimension, min, max, period);
+        break;
+    default:
+        hashSample<<<nSM, WARPS*32>>>(d_out, dimension, min, max, period);
+        break;
+    }
     cudaCheck( cudaMemcpy(out, d_out, dimension*dimension*sizeof(float), cudaMemcpyDeviceToHost) );
     cudaCheck( cudaFree(d_out) );
 }
 
 // MACROS
 
-inline void cudamath::cudaCheck(cudaError_t err)
+inline void GPUMathEngine::cudaCheck(cudaError_t err)
 {
     if (err != cudaSuccess)
         std::cout << "Cuda error: " << cudaGetErrorString(err) << std::endl;
 }
 
-inline void cudamath::multiCudaMalloc(int size, void **a, void **b, void **c)
+inline void GPUMathEngine::multiCudaMalloc(int size, void **a, void **b, void **c)
 {
     cudaCheck( cudaMalloc(a, size) );
     if (b != NULL) cudaCheck( cudaMalloc(b, size) );
     if (c != NULL) cudaCheck( cudaMalloc(c, size) );
 }
 
-inline void cudamath::multiCudaFree(void *a, void *b, void *c)
+inline void GPUMathEngine::multiCudaFree(void *a, void *b, void *c)
 {
     cudaCheck( cudaFree(a) );
     if (b != NULL) cudaCheck( cudaFree(b) );

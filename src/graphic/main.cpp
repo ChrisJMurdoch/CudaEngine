@@ -44,7 +44,7 @@ const glm::vec3 WORLD_UP = glm::vec3(0.0f, 1.0f,  0.0f);
 float yaw = -90, pitch = 0;
 
 // Camera
-glm::vec3 cameraPosition = glm::vec3(0.0f, 10.0f,  0.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 8.0f,  0.0f);
 glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 
 
@@ -80,14 +80,14 @@ int main( int argc, char *argv[] )
 	}
 
 	// Terrain data
-	const int width = 1000;
-	const float tMin = -15, tMax = 20, tPeriod = 20;
+	const int width = 200;
+	const float tMin = -15, tMax = 20, tPeriod = 30;
 	const float wMin = 1, wMax =  1.2, wPeriod =  3;
 	int nVertices = pow(width-1, 2) * 6;
 
 	// Terrain mesh
 	float *terrainMap = new float[nVertices];
-	math->generateHeightMap(width, tMin, tMax, terrainMap, MathEngine::perlin, tPeriod, 1);
+	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::perlin, tPeriod, 5);
 
 	float *terrainMesh = new float[nVertices*6];
 	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
@@ -95,7 +95,7 @@ int main( int argc, char *argv[] )
 
 	// Water mesh
 	float *waterMap = new float[nVertices];
-	math->generateHeightMap(width, wMin, wMax, waterMap, MathEngine::hash, wPeriod, 1);
+	math->generateHeightMap(waterMap, width, wMin, wMax, MathEngine::hash, wPeriod, 1);
 	float *waterMesh = new float[nVertices*6];
 	meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
 	delete waterMap;

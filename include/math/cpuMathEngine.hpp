@@ -10,5 +10,5 @@ public:
     CPUMathEngine();
 
     /** Create heightmap on cpu */
-    void generateHeightMap(int dimension, float min, float max, float *out, Sample sample = sin, float period = 10, int octaves = 1) override;
+    void generateHeightMap(float *out, int dimension, float min, float max, Sample sample, float period, int octaves=1) override;
 };

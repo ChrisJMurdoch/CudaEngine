@@ -10,5 +10,5 @@ public:
     enum Sample { hash, sin, perlin };
 
     /** Create heightmap on gpu */
-    virtual void generateHeightMap(int dimension, float min, float max, float *out, Sample sample = sin, float period = 10, int octaves = 1) = 0;
+    virtual void generateHeightMap(float *out, int dimension, float min, float max, Sample sample, float period, int octaves=1) = 0;
 };

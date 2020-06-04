@@ -17,8 +17,7 @@ namespace gpucommon
 // HARDWARE SETTINGS
 
 #define STREAMS 12
-#define WARPS2D 4
-#define WARPS WARPS2D*WARPS2D
+#define WARPS 16
 
 // DEVICE SETUP
 
@@ -43,38 +42,9 @@ void heightmapKernel(float *out, int dimension, float min, float max, GPUMathEng
     int y = index / dimension;
     do
     {
-        // Octaves
-        float height = 0;
-        for (int o=0; o<octaves; o++)
-        {
-            const float lacunarity = 0.5, persistance = 0.4; // Lacunarity inverse for period
-
-            float pmult = pow(lacunarity, o);
-            float amplitude = pow(persistance, o);
-
-            float value;
-            switch ( sample )
-            {
-            case GPUMathEngine::hash:
-                value = gpucommon::hashSample( x, y, pmult*period );
-                break;
-            case GPUMathEngine::sin:
-                value = gpucommon::sinSample( x, y, pmult*period );
-                break;
-            case GPUMathEngine::perlin:
-                value = gpucommon::perlinSample( x, y, pmult*period );
-                break;
-            default:
-                value = gpucommon::hashSample( x, y, pmult*period );
-                break;
-            }
-            height += ( min + ( (max-min) * value ) ) * amplitude;
-
-            if ( o != 0 ) // Remove half of height if not first octave
-                height -= ( min + ( (max-min) * 0.5 ) ) * amplitude;
-        }
-        //out[index] = height;
-        out[index] = height;
+        // Get sample
+        float value = gpucommon::fractal(x, y, period, sample, octaves);
+        out[index] = min + ( value * (max-min) );
 
         // Stride forward
         index += blockDim.x*gridDim.x;

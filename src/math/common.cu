@@ -2,6 +2,8 @@
 // This has to be directly included into a translation unit as it contains
 // device code, wrap include statement in a namespace to avoid linker errors.
 
+#include "..\..\include\math\mathEngine.hpp"
+
 __host__ __device__
 float floatHash(int x)
 {
@@ -89,4 +91,45 @@ float perlinSample(int x, int y, float period)
 
     // 0-1
     return (centre+1) / 2;
+}
+
+// SAMPLE COMPOSITES
+
+__host__ __device__
+float fractal(int x, int y, float period, MathEngine::Sample sample, int octaves)
+{
+    // Octaves
+    float height = 0;
+    for (int o=0; o<octaves; o++)
+    {
+        // Caluculate amplitude and period
+        const float lacunarity = 0.5, persistance = 0.4;
+        float pmult = pow(lacunarity, o), amplitude = pow(persistance, o);
+
+        // Get sample value
+        float value;
+        switch ( sample )
+        {
+        case MathEngine::hash:
+            value = hashSample( x, y, pmult*period );
+            break;
+        case MathEngine::sin:
+            value = sinSample( x, y, pmult*period );
+            break;
+        case MathEngine::perlin:
+            value = perlinSample( x, y, pmult*period );
+            break;
+        default:
+            value = hashSample( x, y, pmult*period );
+            break;
+        }
+
+        // Add value
+        height += value * amplitude;
+
+        // Preserve max height
+        if ( o != 0 ) 
+            height -= 0.5 * amplitude;
+    }
+    return height;
 }

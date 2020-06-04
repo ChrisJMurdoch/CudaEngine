@@ -111,7 +111,7 @@ float fractal(int x, int y, float period, MathEngine::Sample sample, int octaves
     for (int o=0; o<octaves; o++)
     {
         // Caluculate amplitude and period
-        const float lacunarity = 0.5, persistance = 0.5;
+        const float lacunarity = 0.5, persistance = 0.4;
         float pmult = pow(lacunarity, o), amplitude = pow(persistance, o);
 
         // Get sample value
@@ -144,7 +144,7 @@ float mountain(int x, int y, float period)
     float height = 0;
 
     height += perlinRidgeSample( x, y, period ) * perlinRidgeSample( x+12345, y+12345, period ) / 1.0f;
-    height += perlinSample( x, y, period/2 ) / 2.0f;
+    height += perlinRidgeSample( x, y, period/2 ) * perlinRidgeSample( x+12345, y+12345, period ) / 2.0f;
     height += perlinSample( x, y, period/4 ) / 4.0f;
     height += perlinSample( x, y, period/8 ) / 8.0f;
     height += perlinSample( x, y, period/8 ) / 16.0f;

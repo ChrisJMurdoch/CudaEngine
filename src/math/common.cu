@@ -93,6 +93,13 @@ float perlinSample(int x, int y, float period)
     return (centre+1) / 2;
 }
 
+__host__ __device__
+float perlinRidgeSample(int x, int y, float period)
+{
+    float neg = ( perlinSample(x, y, period)*2 ) - 1 ;
+    return 1 - abs( neg );
+}
+
 // SAMPLE COMPOSITES
 
 __host__ __device__
@@ -100,36 +107,47 @@ float fractal(int x, int y, float period, MathEngine::Sample sample, int octaves
 {
     // Octaves
     float height = 0;
+    float max = 0;
     for (int o=0; o<octaves; o++)
     {
         // Caluculate amplitude and period
-        const float lacunarity = 0.5, persistance = 0.4;
+        const float lacunarity = 0.5, persistance = 0.5;
         float pmult = pow(lacunarity, o), amplitude = pow(persistance, o);
 
         // Get sample value
-        float value;
         switch ( sample )
         {
         case MathEngine::hash:
-            value = hashSample( x, y, pmult*period );
+            height += hashSample( x, y, pmult*period ) * amplitude;
             break;
         case MathEngine::sin:
-            value = sinSample( x, y, pmult*period );
+            height += sinSample( x, y, pmult*period ) * amplitude;
             break;
         case MathEngine::perlin:
-            value = perlinSample( x, y, pmult*period );
+            height += perlinSample( x, y, pmult*period ) * amplitude;
+            break;
+        case MathEngine::perlinRidge:
+            height += perlinRidgeSample( x, y, pmult*period ) * amplitude;
             break;
         default:
-            value = hashSample( x, y, pmult*period );
+            height += hashSample( x, y, pmult*period ) * amplitude;
             break;
         }
-
-        // Add value
-        height += value * amplitude;
-
-        // Preserve max height
-        if ( o != 0 ) 
-            height -= 0.5 * amplitude;
+        max += amplitude;
     }
-    return height;
+    return height / max;
+}
+
+__host__ __device__
+float mountain(int x, int y, float period)
+{
+    float height = 0;
+
+    height += perlinRidgeSample( x, y, period ) * perlinRidgeSample( x+12345, y+12345, period ) / 1.0f;
+    height += perlinSample( x, y, period/2 ) / 2.0f;
+    height += perlinSample( x, y, period/4 ) / 4.0f;
+    height += perlinSample( x, y, period/8 ) / 8.0f;
+    height += perlinSample( x, y, period/8 ) / 16.0f;
+
+    return height / ( 1/1.0f + 1/2.0f + 1/4.0f + 1/8.0f + 1/16.0f );
 }

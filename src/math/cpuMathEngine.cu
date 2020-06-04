@@ -17,7 +17,17 @@ void CPUMathEngine::generateHeightMap(float *out, int dimension, float min, floa
 {
     for (int y=0; y<dimension; y++) for (int x=0; x<dimension; x++)
     {
-        float value = cpucommon::fractal(x, y, period, sample, octaves);
+        float value;
+        // Custom sampling
+        switch ( sample )
+        {
+        case mountain:
+            value = cpucommon::mountain(x, y, period);
+            break;
+        default:
+            value = cpucommon::fractal(x, y, period, sample, octaves);
+            break;
+        }
         out[y*dimension + x] = min + ( value * (max-min) );
     }
 }

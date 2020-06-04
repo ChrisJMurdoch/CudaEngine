@@ -9,8 +9,8 @@ class GPUMathEngine : public MathEngine
 {
 private:
 
-    /** Number of streaming multiprocessors on device - default to GTX1060 */
-    int nSM = 10;
+    /** Number of streaming multiprocessors on device */
+    int nSM;
 
 public:
 

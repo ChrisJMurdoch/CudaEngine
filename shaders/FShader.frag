@@ -8,7 +8,7 @@ out vec4 fragColour;
 
 void main()
 {
-    const float FADE = 5000;
+    const float FADE = 3000;
     const float FOG = 0.8;
 
     float eDepth = depth * depth;

@@ -80,14 +80,14 @@ int main( int argc, char *argv[] )
 	}
 
 	// Terrain data
-	const int width = 200;
-	const float tMin = -20,  tMax = 20,  tPeriod = 30;
+	const int width = 2000;
+	const float tMin = -30,  tMax = 30,  tPeriod = 50;
 	const float wMin = -0.1, wMax = 0.1, wPeriod = 30;
 	int nVertices = pow(width-1, 2) * 6;
 
 	// Terrain mesh
 	float *terrainMap = new float[nVertices];
-	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::perlin, tPeriod, 5);
+	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 3);
 
 	float *terrainMesh = new float[nVertices*6];
 	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);

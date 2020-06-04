@@ -43,7 +43,16 @@ void heightmapKernel(float *out, int dimension, float min, float max, GPUMathEng
     do
     {
         // Get sample
-        float value = gpucommon::fractal(x, y, period, sample, octaves);
+        float value;
+        switch ( sample )
+        {
+        case GPUMathEngine::mountain:
+            value = gpucommon::mountain(x, y, period);
+            break;
+        default:
+            value = gpucommon::fractal(x, y, period, sample, octaves);
+            break;
+        }
         out[index] = min + ( value * (max-min) );
 
         // Stride forward
@@ -74,18 +83,4 @@ inline void GPUMathEngine::cudaCheck(cudaError_t err)
         Log::print( Log::error, "CudaCheck:" );
         Log::print( Log::error, cudaGetErrorString(err) );
     }
-}
-
-inline void GPUMathEngine::multiCudaMalloc(int size, void **a, void **b, void **c)
-{
-    cudaCheck( cudaMalloc(a, size) );
-    if (b != NULL) cudaCheck( cudaMalloc(b, size) );
-    if (c != NULL) cudaCheck( cudaMalloc(c, size) );
-}
-
-inline void GPUMathEngine::multiCudaFree(void *a, void *b, void *c)
-{
-    cudaCheck( cudaFree(a) );
-    if (b != NULL) cudaCheck( cudaFree(b) );
-    if (c != NULL) cudaCheck( cudaFree(c) );
 }

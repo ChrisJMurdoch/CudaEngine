@@ -1,9 +1,8 @@
 
-// GLM vector maths
-#include <glm/glm.hpp>
-
 #include "..\..\include\math\cpuMathEngine.hpp"
 
+// GLM
+#include <glm/glm.hpp>
 namespace cpucommon
 {
     #include "..\..\src\math\common.cu"

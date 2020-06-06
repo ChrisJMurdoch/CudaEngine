@@ -20,6 +20,7 @@
 #include "..\..\include\logger\log.hpp"
 #include "..\..\include\models\vModel.hpp"
 #include "..\..\include\models\eModel.hpp"
+#include "..\..\include\math\test.hpp"
 
 // Math engine
 #include "..\..\include\math\mathEngine.hpp"
@@ -52,6 +53,9 @@ glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 
 int main( int argc, char *argv[] )
 {
+	// Tests
+	// testSampling(100);
+
 	// Determine hardware acceleration
 	bool hardware;
 	MathEngine *math;
@@ -81,13 +85,13 @@ int main( int argc, char *argv[] )
 
 	// Terrain data
 	const int width = 500;
-	const float tMin = -30,  tMax = 30,  tPeriod = 50;
+	const float tMin = -80,  tMax = 80,  tPeriod = 100;
 	const float wMin = -0.1, wMax = 0.1, wPeriod = 30;
 	int nVertices = pow(width-1, 2) * 6;
 
 	// Terrain mesh
 	float *terrainMap = new float[nVertices];
-	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::mountain, tPeriod);
+	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 6);
 
 	float *terrainMesh = new float[nVertices*6];
 	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
@@ -165,7 +169,7 @@ int main( int argc, char *argv[] )
 		{
 			// Model position
 			glm::mat4 position = glm::mat4(1.0f);
-			position = glm::scale(position, glm::vec3(0.1, 0.1, 0.1));
+			position = glm::scale(position, glm::vec3(0.05, 0.05, 0.05));
 			modelLoc = glGetUniformLocation(programID, "model");
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
 

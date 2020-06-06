@@ -2,6 +2,7 @@
 // This has to be directly included into a translation unit as it contains
 // device code, wrap include statement in a namespace to avoid linker errors.
 
+// Enums
 #include "..\..\include\math\mathEngine.hpp"
 
 __host__ __device__
@@ -25,9 +26,17 @@ float lerp(float a, float b, float x)
 }
 
 __host__ __device__
-float fade(float x)
+float diverge(float x)
 {
-    return x * x * x * (x * (x * 6 - 15) + 10);
+    const float PI = 3.14159265358979323846;
+    return 0.5 - ( cos(x*PI)*0.5 );
+}
+
+__host__ __device__
+float squash(float x)
+{
+    const float PI = 3.14159265358979323846;
+    return acos( -2*(x-0.5) ) / PI;
 }
 
 __host__ __device__
@@ -84,10 +93,10 @@ float perlinSample(int x, int y, float period)
     float TLd = glm::dot( TL, TLr );
     float TRd = glm::dot( TR, TRr );
 
-    // Interpolate using fade
-    float bottom = lerp( BLd, BRd, fade(point.x) );
-    float top = lerp( TLd, TRd, fade(point.x) );
-    float centre = lerp( bottom, top, fade(point.y) );
+    // Interpolate using diverge
+    float bottom = lerp( BLd, BRd, diverge(point.x) );
+    float top = lerp( TLd, TRd, diverge(point.x) );
+    float centre = lerp( bottom, top, diverge(point.y) );
 
     // 0-1
     return (centre+1) / 2;
@@ -98,6 +107,13 @@ float perlinRidgeSample(int x, int y, float period)
 {
     float neg = ( perlinSample(x, y, period)*2 ) - 1 ;
     return 1 - abs( neg );
+}
+
+__host__ __device__
+float perlinCutSample(int x, int y, float period)
+{
+    float neg = ( perlinSample(x, y, period)*2 ) - 1 ;
+    return abs( neg );
 }
 
 // SAMPLE COMPOSITES
@@ -141,13 +157,34 @@ float fractal(int x, int y, float period, MathEngine::Sample sample, int octaves
 __host__ __device__
 float mountain(int x, int y, float period)
 {
-    float height = 0;
+    // Amplitudes
+    float plateAmp = 32;
+    float mountainAmp =  16;
+    float a3 =  8;
+    float a4 =  4;
+    float a5 =  2;
+    float a6 =  1;
 
-    height += perlinRidgeSample( x, y, period ) * perlinRidgeSample( x+12345, y+12345, period ) / 1.0f;
-    height += perlinRidgeSample( x, y, period/2 ) * perlinRidgeSample( x+12345, y+12345, period ) / 2.0f;
-    height += perlinSample( x, y, period/4 ) / 4.0f;
-    height += perlinSample( x, y, period/8 ) / 8.0f;
-    height += perlinSample( x, y, period/8 ) / 16.0f;
+    // Terrain samples
+    float plate    = perlinSample(x, y, period);
+    float mountain = perlinSample(x, y, period/2);
+    float s3       = perlinSample(x, y, period/4);
+    float s4       = perlinSample(x, y, period/8);
+    float s5       = perlinSample(x, y, period/16);
+    float s6       = perlinSample(x, y, period/32);
 
-    return height / ( 1/1.0f + 1/2.0f + 1/4.0f + 1/8.0f + 1/16.0f );
+    // Diverge and flatten plate
+    plate = diverge(diverge(diverge(plate)));
+    plate = 0.4 + (plate*0.2);
+
+    // Diverge mountains
+    mountain = diverge( mountain );
+
+    // Smooth surface
+    s3 = squash( s3 );
+
+    // Merge
+    float amp = plateAmp + mountainAmp + a3 + a4 + a5 + a6;
+    float total = ( (plate*plateAmp) + (mountain*mountainAmp) + (s3*a3) + (s4*a4) + (s5*a5)  + (s6*a6) ) / amp;
+    return total;
 }

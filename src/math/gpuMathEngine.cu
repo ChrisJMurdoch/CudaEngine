@@ -1,21 +1,18 @@
 
-// GLM & CUDA
-#include "cuda.h"
-#define GLM_FORCE_CUDA
-#include <glm/glm.hpp>
-
 // Engine
 #include "..\..\include\logger\log.hpp"
 #include "..\..\include\math\gpuMathEngine.hpp"
 
-// Host/Device functions
+// GLM & CUDA
+#include "cuda.h"
+#define GLM_FORCE_CUDA
+#include <glm/glm.hpp>
 namespace gpucommon
 {
     #include "..\..\src\math\common.cu"
 }
 
 // HARDWARE SETTINGS
-
 #define STREAMS 12
 #define WARPS 16
 

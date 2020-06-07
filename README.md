@@ -7,7 +7,7 @@ C++ Terrain generation and rendering engine with optional hardware acceleration.
 
 The **Visual Studio framework** is required to run the program.
 
-The **NVCC** Compiler is needed to compile the .cu kernel files.
+A **GLFW** dll is included in dist but it is recommended that you build from source.
 
 **NVIDIA Tesla** and up is required to run with hardware acceleration.
 

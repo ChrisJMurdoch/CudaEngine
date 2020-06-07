@@ -15,5 +15,8 @@ To specify the width in vertices of the terrain to generate, use an integer as t
 
 Hardware acceleration will only speed up terrain generation for around 1000 vertex width and up.
 
+glfw3.dll is included for those who do not wish to install it themselves, however building from
+source will provide better OS specific optimisations in the library.
+
 This software has been has been tested and optimised for stability and performance but comes with
 no guarantee.  If your computer starts making noises, it's not intended.  Close the program.

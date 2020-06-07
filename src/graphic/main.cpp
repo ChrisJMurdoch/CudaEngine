@@ -20,7 +20,6 @@
 #include "..\..\include\logger\log.hpp"
 #include "..\..\include\models\vModel.hpp"
 #include "..\..\include\models\eModel.hpp"
-#include "..\..\include\math\test.hpp"
 
 // Math engine
 #include "..\..\include\math\mathEngine.hpp"

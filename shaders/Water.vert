@@ -15,9 +15,9 @@ void main()
 {
     // Morph wave
     vec3 wave = position;
-    float a = sin( (wave.x + time)*0.3f ) * sin( (wave.z + time)*0.3f );
-    float b = sin( (-wave.x + time)*0.6f ) * sin( (-wave.z + time)*0.6f );
-    wave.y += a + b;
+    float a = sin( (wave.x + time)*0.3f ) + sin( (wave.z + time)*0.3f );
+    float b = sin( (-wave.x + time)*0.4f ) * sin( (-wave.z + time)*0.4f );
+    wave.y += ( a + b ) / 3;
 
     vertColour = colour;
     vec4 camRelative = view * model * vec4(wave, 1.0f);

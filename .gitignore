@@ -9,6 +9,6 @@
 # Third-party code
 /vendor/
 # Executables
-*.exe
+engine.exe
 # Macros
 *.bat

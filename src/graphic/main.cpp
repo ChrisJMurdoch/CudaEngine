@@ -82,7 +82,7 @@ int main( int argc, char *argv[] )
 	}
 
 	// Terrain data
-	const int width = argc>2 ? std::stoi(argv[2]) : 2000;
+	const int width = argc>2 ? std::stoi(argv[2]) : 200;
 	const float tMin = -80,  tMax = 80,  tPeriod = 100;
 	const float wMin = -0.1, wMax = 0.1, wPeriod = 30;
 	int nVertices = pow(width-1, 2) * 6;

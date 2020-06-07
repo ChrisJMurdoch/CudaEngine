@@ -1,0 +1,19 @@
+
+Author: Chris Murdoch
+Date: 07/06/2020
+
+This program has been tested only for Windows 10 and requires the Visual Studio framework to run.
+The program has optional hardware acceleration for NVIDA GPUs with architecture TESLA and up.
+
+To run with acceleration, use 'cuda' as the first cmd argument:
+>   program cuda
+To run without, any or no argument can be used
+
+To specify the width in vertices of the terrain to generate, use an integer as the second argument:
+>   program cuda 1500
+>   program nocuda 500
+
+Hardware acceleration will only speed up terrain generation for around 1000 vertex width and up.
+
+This software has been has been tested and optimised for stability and performance but comes with
+no guarantee.  If your computer starts making noises, it's not intended.  Close the program.

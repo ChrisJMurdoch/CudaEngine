@@ -5,9 +5,10 @@ C++ Terrain generation and rendering engine with optional hardware acceleration.
 
 ## Requirements
 
-The **Visual Studio framework** is required to run the program.
+The **Microsoft Visual C++ Redistributable** is required to run the program.
+It can be downloaded at: https://support.microsoft.com/en-gb/help/2977003
 
-A **GLFW** dll is included in dist but it is recommended that you build from source.
+A **GLFW** dll is included but can be built from: https://www.glfw.org
 
 **NVIDIA Tesla** and up is required to run with hardware acceleration.
 

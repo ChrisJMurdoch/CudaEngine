@@ -27,7 +27,8 @@
 #include "..\..\include\math\gpuMathEngine.hpp"
 #include "..\..\include\math\cpuMathEngine.hpp"
 
-#include <string.h>
+// Input parsing
+#include <string>
 
 // === CONSTANTS ===
 
@@ -53,9 +54,6 @@ glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 
 int main( int argc, char *argv[] )
 {
-	// Tests
-	// testSampling(100);
-
 	// Determine hardware acceleration
 	bool hardware;
 	MathEngine *math;
@@ -75,8 +73,8 @@ int main( int argc, char *argv[] )
 
 	// Initialise graphics
 	GLFWwindow *window = NULL;
-	GLuint programID;
-	if ( initialise(window, programID) != 0 )
+	GLuint terrainProg, waterProg;
+	if ( initialise(window, terrainProg, waterProg) != 0 )
 	{
 		Log::print(Log::error, "Initialisation error.");
 		glfwTerminate();
@@ -84,7 +82,7 @@ int main( int argc, char *argv[] )
 	}
 
 	// Terrain data
-	const int width = 500;
+	const int width = argc>2 ? std::stoi(argv[2]) : 2000;
 	const float tMin = -80,  tMax = 80,  tPeriod = 100;
 	const float wMin = -0.1, wMax = 0.1, wPeriod = 30;
 	int nVertices = pow(width-1, 2) * 6;
@@ -92,7 +90,6 @@ int main( int argc, char *argv[] )
 	// Terrain mesh
 	float *terrainMap = new float[nVertices];
 	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 6);
-
 	float *terrainMesh = new float[nVertices*6];
 	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
 	delete terrainMap;
@@ -105,9 +102,9 @@ int main( int argc, char *argv[] )
 	delete waterMap;
 
 	// Create models
-	VModel terrain = VModel( nVertices, terrainMesh, GL_STATIC_DRAW );
+	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, GL_STATIC_DRAW );
 	delete terrainMesh;
-	VModel water = VModel( nVertices, waterMesh, GL_STREAM_DRAW );
+	VModel water = VModel( nVertices, waterMesh, waterProg, GL_STREAM_DRAW );
 	delete waterMesh;
 
 	// Model array
@@ -149,29 +146,23 @@ int main( int argc, char *argv[] )
 		// Clear screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Use program shaders
-		glUseProgram(programID);
-
-		// COMMON TRANSFORMATIONS
-
-		// View
+		// Common vectors
 		glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraDirection, WORLD_UP);
-		int modelLoc = glGetUniformLocation(programID, "view");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-		// Projection
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-		modelLoc = glGetUniformLocation(programID, "projection");
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		glm::mat4 position = glm::mat4(1.0f);
+		position = glm::scale(position, glm::vec3(0.05, 0.05, 0.05));
 
 		// MODELS
 		for(int i=0; i<nModels; i++)
 		{
-			// Model position
-			glm::mat4 position = glm::mat4(1.0f);
-			position = glm::scale(position, glm::vec3(0.05, 0.05, 0.05));
-			modelLoc = glGetUniformLocation(programID, "model");
-			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(position));
+			// Program shaders - temp
+			glUseProgram(models[i]->program);
+
+			// Uniforms
+			glUniform1f(glGetUniformLocation(models[i]->program, "time"), currentTime);
+			glUniformMatrix4fv(glGetUniformLocation(models[i]->program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(models[i]->program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			glUniformMatrix4fv(glGetUniformLocation(models[i]->program, "model"), 1, GL_FALSE, glm::value_ptr(position));
 
 			// Render
 			models[i]->render();
@@ -186,13 +177,14 @@ int main( int argc, char *argv[] )
 	}
 
 	// Cleanup
-	glDeleteProgram(programID);
+	glDeleteProgram(terrainProg);
+	glDeleteProgram(waterProg);
 	glfwTerminate();
 
 	return 0;
 }
 
-int initialise(GLFWwindow *&window, GLuint &programID)
+int initialise(GLFWwindow *&window, GLuint &terrainProg, GLuint &waterProg)
 {
 	// Create window
 	if ( createWindow(window) != 0 )
@@ -208,9 +200,17 @@ int initialise(GLFWwindow *&window, GLuint &programID)
 		return -1;
 	}
 
-	// Load shaders
-	programID = loadShaders( "shaders\\VShader.vert", "shaders\\FShader.frag" );
-	if (programID == 0)
+	// Load terrain shaders
+	terrainProg = loadShaders( "shaders\\Terrain.vert", "shaders\\FShader.frag" );
+	if (terrainProg == 0)
+	{
+		Log::print(Log::error, "Shader loading error.");
+		return -1;
+	}
+
+	// Load water shaders
+	waterProg = loadShaders( "shaders\\Water.vert", "shaders\\FShader.frag" );
+	if (waterProg == 0)
 	{
 		Log::print(Log::error, "Shader loading error.");
 		return -1;

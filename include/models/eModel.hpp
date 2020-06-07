@@ -14,7 +14,7 @@ private:
     GLuint EBO;
 
 public:
-    EModel(int nVertices, float *vertexData, int nIndices, unsigned int *indexData, GLenum usage = GL_STATIC_DRAW);
+    EModel(int nVertices, float *vertexData, int nIndices, unsigned int *indexData, GLuint program, GLenum usage = GL_STATIC_DRAW);
     void bufferData(float *vertexData, unsigned int *indexData);
     void render() override;
     ~EModel();

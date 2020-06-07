@@ -18,6 +18,9 @@ protected:
     GLuint VAO, VBO;
 
 public:
-    Model(int nVertices, GLenum usage);
+    // Shader data
+    GLuint program;
+    
+    Model(int nVertices, GLenum usage, GLuint program);
     virtual void render() = 0;
 };

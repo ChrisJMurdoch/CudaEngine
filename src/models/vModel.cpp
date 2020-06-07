@@ -3,7 +3,7 @@
 
 #include "..\..\include\models\vModel.hpp"
 
-VModel::VModel(int nVertices, float *vertexData, GLenum usage) : Model(nVertices, usage)
+VModel::VModel(int nVertices, float *vertexData, GLuint program, GLenum usage) : Model(nVertices, usage, program)
 {
 	// Initialise member variables
 	glGenVertexArrays(1, &VAO);

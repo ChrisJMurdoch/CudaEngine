@@ -9,6 +9,7 @@ out vec3 vertColour;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform float time;
 
 void main()
 {

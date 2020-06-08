@@ -1,4 +1,6 @@
 
 #pragma once
 
-GLuint loadShaders(const char *vertFilePath,const char *fragFilePath);
+#include <glad/glad.h>
+
+void loadShaders(const char *vertFilePath,const char *fragFilePath, GLuint &programID);

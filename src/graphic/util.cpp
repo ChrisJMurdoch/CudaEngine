@@ -1,32 +1,27 @@
 
+#include "..\..\include\graphic\util.hpp"
+
+#include "..\..\include\logger\log.hpp"
+
 #include <string>
 #include <fstream>
 #include <sstream>
 
-#include <glad/glad.h>
-
-#include "..\..\include\graphic\util.hpp"
-#include "..\..\include\logger\log.hpp"
-
-GLuint loadShaders(const char *vertFilePath, const char *fragFilePath)
+void loadShaders(const char *vertFilePath, const char *fragFilePath, GLuint &programID )
 {
 	// Create shaders
-	GLuint vertShaderID = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint vertShaderID = glCreateShader(GL_VERTEX_SHADER), fragShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
-	// Read the Shader files
-	std::string vertShaderCode, fragShaderCode;
-	std::ifstream vertShaderStream(vertFilePath, std::ios::in);
-	std::ifstream fragShaderStream(fragFilePath, std::ios::in);
-
+	// Buffer data
+	std::ifstream vertShaderStream(vertFilePath, std::ios::in), fragShaderStream(fragFilePath, std::ios::in);
 	std::stringstream vsstr, fsstr;
 	vsstr << vertShaderStream.rdbuf();
 	fsstr << fragShaderStream.rdbuf();
 	vertShaderStream.close();
 	fragShaderStream.close();
 
-	vertShaderCode = vsstr.str();
-	fragShaderCode = fsstr.str();
+	// Parse data
+	std::string vertShaderCode = vsstr.str(), fragShaderCode = fsstr.str();
 	const char *vertSourcePointer = vertShaderCode.c_str();
 	const char *fragSourcePointer = fragShaderCode.c_str();
 
@@ -45,18 +40,18 @@ GLuint loadShaders(const char *vertFilePath, const char *fragFilePath)
         char infoLog[512];
         glGetShaderInfoLog(vertShaderID, 512, NULL, infoLog);
 		Log::print(Log::error, infoLog);
-		return 0;
+		throw "Vert compilation error";
 	}
     if (!fragSucc)
 	{
         char infoLog[512];
         glGetShaderInfoLog(fragShaderID, 512, NULL, infoLog);
 		Log::print(Log::error, infoLog);
-		return 0;
+		throw "Frag compilation error";
 	}
 
-	// Link the program
-	GLuint programID = glCreateProgram();
+	// Link program
+	programID = glCreateProgram();
 	glAttachShader(programID, vertShaderID);
 	glAttachShader(programID, fragShaderID);
 	glLinkProgram(programID);
@@ -69,7 +64,7 @@ GLuint loadShaders(const char *vertFilePath, const char *fragFilePath)
         char infoLog[512];
         glGetProgramInfoLog(programID, 512, NULL, infoLog);
 		Log::print(Log::error, infoLog);
-		return 0;
+		throw "Program linking error";
 	}
 	
 	// Delete shader objects
@@ -77,6 +72,4 @@ GLuint loadShaders(const char *vertFilePath, const char *fragFilePath)
 	glDetachShader(programID, fragShaderID);
 	glDeleteShader(vertShaderID);
 	glDeleteShader(fragShaderID);
-
-	return programID;
 }

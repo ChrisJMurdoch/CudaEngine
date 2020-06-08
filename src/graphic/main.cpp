@@ -2,38 +2,27 @@
 
 // === INCLUDES ===
 
-// OpenGL initialisation
-#include <glad/glad.h>
-
-// Window creation
-#include <GLFW/glfw3.h>
-
-// Math
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+// Header
+#include "..\..\include\graphic\main.hpp"
 
 // Engine
-#include "..\..\include\graphic\main.hpp"
-#include "..\..\include\graphic\util.hpp"
 #include "..\..\include\generation\meshgen.hpp"
+#include "..\..\include\graphic\util.hpp"
 #include "..\..\include\logger\log.hpp"
+#include "..\..\include\math\mathEngine.hpp"
+#include "..\..\include\math\cpuMathEngine.hpp"
+#include "..\..\include\math\gpuMathEngine.hpp"
 #include "..\..\include\models\vModel.hpp"
 #include "..\..\include\models\eModel.hpp"
 
-// Math engine
-#include "..\..\include\math\mathEngine.hpp"
-#include "..\..\include\math\gpuMathEngine.hpp"
-#include "..\..\include\math\cpuMathEngine.hpp"
+// SIMD Vector math
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-// Input parsing
+// Standard headers
 #include <string>
 
 // === CONSTANTS ===
-
-// Display constants
-const int VIEW_WIDTH = 800;
-const int VIEW_HEIGHT = 600;
 
 // Vector constants
 const glm::vec3 WORLD_UP = glm::vec3(0.0f, 1.0f,  0.0f);
@@ -41,7 +30,10 @@ const glm::vec3 WORLD_UP = glm::vec3(0.0f, 1.0f,  0.0f);
 
 // === VARIABLES ===
 
-// Mouse
+// Window size
+const int viewWidth = 800, viewHeight = 600;
+
+// Mouse controls
 float yaw = -90, pitch = 0;
 
 // Camera
@@ -53,8 +45,7 @@ glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 
 int main( int argc, char *argv[] )
 {
-	// Determine hardware acceleration
-	bool hardware;
+	// Determine math engine to use
 	MathEngine *math;
 	if ( argc>1 && strcmp( argv[1], "cuda" )==0 )
 	{
@@ -67,18 +58,26 @@ int main( int argc, char *argv[] )
 		math = &CPUMathEngine();
 	}
 
-	// Start timer
+	// Start loading timer
 	float startLoadTime = glfwGetTime();
 
-	// Initialise graphics
-	GLFWwindow *window = NULL;
+	// Create window
+	GLFWwindow *window = nullptr;
+	createWindow(window);
+
+	// Initialise GLAD
+	initGLAD(window);
+
+	// Enable Z-Buffering
+	glEnable(GL_DEPTH_TEST);
+
+	// Set background colour
+	glClearColor(0.3f, 0.7f, 0.9f, 1.0f);
+
+	// Load shader programs
 	GLuint terrainProg, waterProg;
-	if ( initialise(window, terrainProg, waterProg) != 0 )
-	{
-		Log::print(Log::error, "Initialisation error.");
-		glfwTerminate();
-		return -1;
-	}
+	loadShaders( "shaders\\Terrain.vert", "shaders\\FShader.frag", terrainProg );
+	loadShaders( "shaders\\Water.vert", "shaders\\FShader.frag", waterProg );
 
 	// Terrain data
 	const int width = argc>2 ? std::stoi(argv[2]) : 200;
@@ -86,23 +85,21 @@ int main( int argc, char *argv[] )
 	const float wMin = -0.1, wMax = 0.1, wPeriod = 30;
 	int nVertices = pow(width-1, 2) * 6;
 
-	// Terrain mesh
+	// Terrain model
 	float *terrainMap = new float[nVertices];
 	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 6);
 	float *terrainMesh = new float[nVertices*6];
 	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
 	delete terrainMap;
+	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, GL_STATIC_DRAW );
+	delete terrainMesh;
 
-	// Water mesh
+	// Water model
 	float *waterMap = new float[nVertices];
 	math->generateHeightMap(waterMap, width, wMin, wMax, MathEngine::hash, wPeriod, 1);
 	float *waterMesh = new float[nVertices*6];
 	meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
 	delete waterMap;
-
-	// Create models
-	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, GL_STATIC_DRAW );
-	delete terrainMesh;
 	VModel water = VModel( nVertices, waterMesh, waterProg, GL_STREAM_DRAW );
 	delete waterMesh;
 
@@ -115,7 +112,7 @@ int main( int argc, char *argv[] )
 	// End timer
 	float endLoadTime = glfwGetTime();
 
-	// Display
+	// Display load time
 	Log::print( Log::message, "Loading time: ", Log::NO_NEWLINE);
 	Log::print( Log::message, endLoadTime - startLoadTime, Log::NEWLINE);
 
@@ -123,8 +120,6 @@ int main( int argc, char *argv[] )
 	float lastTime = glfwGetTime();
 	while( !glfwWindowShouldClose(window) )
 	{
-		// PHYSICS
-
 		// Get time-delta
 		float currentTime = glfwGetTime();
 		float deltaTime = currentTime - lastTime;
@@ -140,16 +135,13 @@ int main( int argc, char *argv[] )
 		// Move
 		processInput(window, deltaTime, cameraDirection);
 
-		// RENDERING
-
 		// Clear screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Common vectors
-		glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraDirection, WORLD_UP);
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-		glm::mat4 position = glm::mat4(1.0f);
-		position = glm::scale(position, glm::vec3(0.05, 0.05, 0.05));
+		// Common matrices
+		glm::mat4 view = glm::lookAt( cameraPosition, cameraPosition + cameraDirection, WORLD_UP );
+		glm::mat4 projection = glm::perspective( glm::radians(45.0f), (float)viewWidth/viewHeight, 0.1f, 100.0f );
+		glm::mat4 position = glm::scale( glm::mat4(1.0f), glm::vec3(0.05, 0.05, 0.05) );
 
 		// MODELS
 		for(int i=0; i<nModels; i++)
@@ -183,48 +175,7 @@ int main( int argc, char *argv[] )
 	return 0;
 }
 
-int initialise(GLFWwindow *&window, GLuint &terrainProg, GLuint &waterProg)
-{
-	// Create window
-	if ( createWindow(window) != 0 )
-	{
-		Log::print(Log::error, "Window creation error.");
-		return -1;
-	}
-
-	// Initialise GLAD
-	if ( initGLAD(window) != 0 )
-	{
-		Log::print(Log::error, "GLAD initialising error.");
-		return -1;
-	}
-
-	// Load terrain shaders
-	terrainProg = loadShaders( "shaders\\Terrain.vert", "shaders\\FShader.frag" );
-	if (terrainProg == 0)
-	{
-		Log::print(Log::error, "Shader loading error.");
-		return -1;
-	}
-
-	// Load water shaders
-	waterProg = loadShaders( "shaders\\Water.vert", "shaders\\FShader.frag" );
-	if (waterProg == 0)
-	{
-		Log::print(Log::error, "Shader loading error.");
-		return -1;
-	}
-
-	// Z-Buffering
-	glEnable(GL_DEPTH_TEST);
-
-	// Set background
-	glClearColor(0.3f, 0.7f, 0.9f, 1.0f);
-
-	return 0;
-}
-
-int createWindow(GLFWwindow *&window)
+void createWindow(GLFWwindow *&window)
 {
 	// Initialise GLFW
 	glfwInit();
@@ -237,43 +188,34 @@ int createWindow(GLFWwindow *&window)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	// Create window
-	window = glfwCreateWindow( VIEW_WIDTH, VIEW_HEIGHT, "CudaEngine", NULL, NULL);
-	if (window == NULL)
-		return -1;
+	window = glfwCreateWindow( viewWidth, viewHeight, "CudaEngine", NULL, NULL);
+	if ( window == nullptr )
+		throw "Window creation error";
 	glfwMakeContextCurrent(window);
 
 	// Setup key press mode
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouseCallback);
-	
-	return 0;
 }
 
-int initGLAD(GLFWwindow *window)
+void initGLAD(GLFWwindow *window)
 {
 	// Load OpenGL
-	if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
-		return -1;
+	if ( gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0 )
+		throw "GLAD loading error";
 
 	// Set viewport to full window and configure resize callback
-	glViewport(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+	glViewport(0, 0, viewWidth, viewHeight);
 	glfwSetFramebufferSizeCallback(window, resizeCallback);
-
-	return 0;
-}
-
-void resizeCallback(GLFWwindow *window, int width, int tMax)
-{
-    glViewport(0, 0, width, tMax);
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
-	static float lastX = VIEW_WIDTH/2, lastY = VIEW_HEIGHT/2;
-	static bool initialMouse = true;
+	static float lastX = viewWidth/2, lastY = viewHeight/2;
 
 	// Ignore mouse on first frame
+	static bool initialMouse = true;
 	if (initialMouse)
 	{
 		lastX = xpos;
@@ -283,17 +225,20 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 	}
 
 	// Adjust camera angle
-	const float sensitivity = 0.05f;
-	yaw += (xpos - lastX) * sensitivity;
-	pitch += (lastY - ypos) * sensitivity;
+	const float SENSITIVITY = 0.05f;
+	yaw += (xpos - lastX) * SENSITIVITY;
+	pitch += (lastY - ypos) * SENSITIVITY;
 	lastX = xpos;
 	lastY = ypos;
 
 	// Constrain pitch
-	if(pitch > 89.0f)
-		pitch =  89.0f;
-	if(pitch < -89.0f)
-		pitch = -89.0f;
+	pitch = pitch >  89.0f ?  89.0f : pitch;
+	pitch = pitch < -89.0f ? -89.0f : pitch;
+}
+
+void resizeCallback(GLFWwindow *window, int width, int height)
+{
+    glViewport(0, 0, width, height);
 }
 
 void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection)
@@ -303,10 +248,10 @@ void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection
         glfwSetWindowShouldClose(window, true);
 	
 	// Generate movement vectors
-	const float cameraSpeed = 6.0f * deltaTime;
-	const glm::vec3 forward = cameraSpeed * cameraDirection;
-	const glm::vec3 right = cameraSpeed * glm::normalize(glm::cross(cameraDirection, WORLD_UP));
-	const glm::vec3 up = cameraSpeed * glm::normalize(glm::cross(right, forward));
+	float cameraSpeed = 6.0f * deltaTime;
+	glm::vec3 forward = cameraSpeed * cameraDirection;
+	glm::vec3 right = cameraSpeed * glm::normalize(glm::cross(cameraDirection, WORLD_UP));
+	glm::vec3 up = cameraSpeed * glm::normalize(glm::cross(right, forward));
 
 	// Move
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

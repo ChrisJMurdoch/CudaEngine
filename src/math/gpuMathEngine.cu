@@ -7,6 +7,8 @@
 #include "cuda.h"
 #define GLM_FORCE_CUDA
 #include <glm/glm.hpp>
+
+// Device code
 namespace gpucommon
 {
     #include "..\..\src\math\common.cu"

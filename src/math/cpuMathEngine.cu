@@ -3,12 +3,12 @@
 
 // GLM
 #include <glm/glm.hpp>
+
+// Host code
 namespace cpucommon
 {
     #include "..\..\src\math\common.cu"
 }
-
-#define M_PI 3.14159265358979323846
 
 // FUNCTIONS
 

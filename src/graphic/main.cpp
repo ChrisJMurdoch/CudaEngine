@@ -21,6 +21,7 @@
 
 // Standard headers
 #include <string>
+#include <thread>
 
 // === CONSTANTS ===
 
@@ -80,27 +81,29 @@ int main( int argc, char *argv[] )
 	loadShaders( "shaders\\Water.vert", "shaders\\FShader.frag", waterProg );
 
 	// Terrain data
-	const int width = argc>2 ? std::stoi(argv[2]) : 200;
+	const int width = argc>2 ? std::stoi(argv[2]) : 300;
 	const float tMin = -80,  tMax = 80,  tPeriod = 100;
 	const float wMin = -0.1, wMax = 0.1, wPeriod = 30;
 	int nVertices = pow(width-1, 2) * 6;
 
-	// Terrain model
-	float *terrainMap = new float[nVertices];
+	// Generate heightmaps
+	float *terrainMap = new float[nVertices], *waterMap = new float[nVertices];
 	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 6);
-	float *terrainMesh = new float[nVertices*6];
-	meshgen::generateVertices(terrainMap, width, terrainMesh, meshgen::landscape);
-	delete terrainMap;
-	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, GL_STATIC_DRAW );
-	delete terrainMesh;
-
-	// Water model
-	float *waterMap = new float[nVertices];
 	math->generateHeightMap(waterMap, width, wMin, wMax, MathEngine::hash, wPeriod, 1);
-	float *waterMesh = new float[nVertices*6];
-	meshgen::generateVertices(waterMap, width, waterMesh, meshgen::water);
+
+	// Generate meshes
+	float *terrainMesh = new float[nVertices*6], *waterMesh = new float[nVertices*6];
+	std::thread t1( meshgen::generateVertices, terrainMap, width, terrainMesh, meshgen::landscape );
+	std::thread t2( meshgen::generateVertices, waterMap, width, waterMesh, meshgen::water );
+	t1.join();
+	t2.join();
+	delete terrainMap;
 	delete waterMap;
+
+	// Create models
+	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, GL_STATIC_DRAW );
 	VModel water = VModel( nVertices, waterMesh, waterProg, GL_STREAM_DRAW );
+	delete terrainMesh;
 	delete waterMesh;
 
 	// Model array

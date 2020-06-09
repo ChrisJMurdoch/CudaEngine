@@ -1,5 +1,4 @@
 
-
 // === INCLUDES ===
 
 // Header
@@ -18,7 +17,6 @@
 
 // SIMD Vector math
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 // Standard headers
 #include <string>
@@ -34,7 +32,7 @@ const glm::vec3 WORLD_UP = glm::vec3(0.0f, 1.0f,  0.0f);
 // === VARIABLES ===
 
 // Window size
-const int viewWidth = 800, viewHeight = 600;
+int viewWidth = 800, viewHeight = 600;
 
 // Mouse controls
 float yaw = -90, pitch = 0;
@@ -146,23 +144,13 @@ int main( int argc, char *argv[] )
 
 		// Common matrices
 		glm::mat4 view = glm::lookAt( cameraPosition, cameraPosition + cameraDirection, WORLD_UP );
-		glm::mat4 projection = glm::perspective( glm::radians(45.0f), (float)viewWidth/viewHeight, 0.1f, 100.0f );
-		glm::mat4 position = glm::scale( glm::mat4(1.0f), glm::vec3(0.05, 0.05, 0.05) );
+		glm::mat4 projection = glm::perspective( glm::radians(60.0f), (float)viewWidth/(float)viewHeight, 0.1f, 1000.0f ); // Clip 10cm - 1km
 
 		// MODELS
 		for(int i=0; i<nModels; i++)
 		{
-			// Program shaders - temp
-			glUseProgram(models[i]->program);
-
-			// Uniforms
-			glUniform1f(glGetUniformLocation(models[i]->program, "time"), currentTime);
-			glUniformMatrix4fv(glGetUniformLocation(models[i]->program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glUniformMatrix4fv(glGetUniformLocation(models[i]->program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			glUniformMatrix4fv(glGetUniformLocation(models[i]->program, "model"), 1, GL_FALSE, glm::value_ptr(position));
-
-			// Render
-			models[i]->render();
+			// Render model
+			models[i]->render( currentTime, view, projection );
 		}
 
 		// Unbind VAO
@@ -244,6 +232,7 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 
 void resizeCallback(GLFWwindow *window, int width, int height)
 {
+	viewWidth=width, viewHeight=height;
     glViewport(0, 0, width, height);
 }
 
@@ -254,7 +243,7 @@ void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection
         glfwSetWindowShouldClose(window, true);
 	
 	// Generate movement vectors
-	float cameraSpeed = 6.0f * deltaTime;
+	float cameraSpeed = 60.0f * deltaTime;
 	glm::vec3 forward = cameraSpeed * cameraDirection;
 	glm::vec3 right = cameraSpeed * glm::normalize(glm::cross(cameraDirection, WORLD_UP));
 	glm::vec3 up = cameraSpeed * glm::normalize(glm::cross(right, forward));

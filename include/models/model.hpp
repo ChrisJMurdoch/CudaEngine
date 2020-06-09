@@ -2,6 +2,8 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 /** Abstract mesh model */
 class Model
@@ -17,10 +19,13 @@ protected:
     int nVertices;
     GLuint VAO, VBO;
 
+    // Model data
+    glm::mat4 position;
+
 public:
     // Shader data
     GLuint program;
     
     Model(int nVertices, GLenum usage, GLuint program);
-    virtual void render() = 0;
+    virtual void render(float time, glm::mat4 view, glm::mat4 projection) = 0;
 };

@@ -49,11 +49,24 @@ void EModel::bufferData(float *vertexData, unsigned int *indexData)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void EModel::render()
+void EModel::render(float time, glm::mat4 view, glm::mat4 projection)
 {
+	// Bind shaders
+	glUseProgram(program);
+
+	// Bind uniforms
+	glUniform1f(		glGetUniformLocation(program, "time"), time);
+	glUniformMatrix4fv(	glGetUniformLocation(program, "view"),       1, GL_FALSE, glm::value_ptr(view) );
+	glUniformMatrix4fv(	glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection) );
+	glUniformMatrix4fv(	glGetUniformLocation(program, "model"),      1, GL_FALSE, glm::value_ptr(position) );
+
+	// Render
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_INT, 0);
+
+	// Cleanup
     glBindVertexArray(0);
+	glUseProgram(0);
 }
 
 EModel::~EModel()

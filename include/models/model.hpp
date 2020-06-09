@@ -27,5 +27,5 @@ public:
     GLuint program;
     
     Model(int nVertices, GLenum usage, GLuint program);
-    virtual void render(float time, glm::mat4 view, glm::mat4 projection) = 0;
+    virtual void render(float time, glm::mat4 view, glm::mat4 projection, glm::vec3 focus) = 0;
 };

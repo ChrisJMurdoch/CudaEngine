@@ -38,9 +38,9 @@ int viewWidth = 800, viewHeight = 600;
 float yaw = -90, pitch = 0;
 
 // Camera
-glm::vec3 cameraPosition = glm::vec3(0.0f, 8.0f,  0.0f);
-glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 1.0f);
-
+glm::vec3 focus = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 camRelative = glm::vec3(0.0f, 1.0f,  1.0f);
+float camDistance = 100.0f;
 
 // === FUNCTIONS ===
 
@@ -128,29 +128,28 @@ int main( int argc, char *argv[] )
 		float currentTime = glfwGetTime();
 		float deltaTime = currentTime - lastTime;
 		lastTime = currentTime;
-		
-		// Calculate new camera angle
-		glm::vec3 direction;
-		direction.x = cos( glm::radians(yaw)) * cos(glm::radians(pitch) );
-		direction.y = sin( glm::radians(pitch) );
-		direction.z = sin( glm::radians(yaw)) * cos(glm::radians(pitch) );
-		glm::vec3 cameraDirection = glm::normalize(direction);
+
+		// Calculate camera position
+		camRelative.x = sin( glm::radians(yaw) );
+		camRelative.y = camDistance / 100;
+		camRelative.z = cos( glm::radians(yaw) );
+		camRelative = camDistance * glm::normalize(camRelative);
 
 		// Move
-		processInput(window, deltaTime, cameraDirection);
+		processInput( window, deltaTime, glm::normalize(-camRelative) );
 
 		// Clear screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Common matrices
-		glm::mat4 view = glm::lookAt( cameraPosition, cameraPosition + cameraDirection, WORLD_UP );
+		glm::mat4 view = glm::lookAt( focus+camRelative, focus, WORLD_UP );
 		glm::mat4 projection = glm::perspective( glm::radians(60.0f), (float)viewWidth/(float)viewHeight, 0.1f, 1000.0f ); // Clip 10cm - 1km
 
 		// MODELS
 		for(int i=0; i<nModels; i++)
 		{
 			// Render model
-			models[i]->render( currentTime, view, projection );
+			models[i]->render( currentTime, view, projection, focus );
 		}
 
 		// Unbind VAO
@@ -189,8 +188,20 @@ void createWindow(GLFWwindow *&window)
 
 	// Setup key press mode
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouseCallback);
+	glfwSetScrollCallback(window, scrollCallback);
+}
+
+void mouseCallback(GLFWwindow* window, double xpos, double ypos)
+{
+
+}
+
+void scrollCallback(GLFWwindow* window, double xOff, double yOff)
+{
+	camDistance -= yOff*5;
+	camDistance = camDistance<50 ? 50 : camDistance;
 }
 
 void initGLAD(GLFWwindow *window)
@@ -202,32 +213,6 @@ void initGLAD(GLFWwindow *window)
 	// Set viewport to full window and configure resize callback
 	glViewport(0, 0, viewWidth, viewHeight);
 	glfwSetFramebufferSizeCallback(window, resizeCallback);
-}
-
-void mouseCallback(GLFWwindow* window, double xpos, double ypos)
-{
-	static float lastX = viewWidth/2, lastY = viewHeight/2;
-
-	// Ignore mouse on first frame
-	static bool initialMouse = true;
-	if (initialMouse)
-	{
-		lastX = xpos;
-		lastY = ypos;
-		initialMouse = false;
-		return;
-	}
-
-	// Adjust camera angle
-	const float SENSITIVITY = 0.05f;
-	yaw += (xpos - lastX) * SENSITIVITY;
-	pitch += (lastY - ypos) * SENSITIVITY;
-	lastX = xpos;
-	lastY = ypos;
-
-	// Constrain pitch
-	pitch = pitch >  89.0f ?  89.0f : pitch;
-	pitch = pitch < -89.0f ? -89.0f : pitch;
 }
 
 void resizeCallback(GLFWwindow *window, int width, int height)
@@ -243,22 +228,28 @@ void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection
         glfwSetWindowShouldClose(window, true);
 	
 	// Generate movement vectors
-	float cameraSpeed = 60.0f * deltaTime;
-	glm::vec3 forward = cameraSpeed * cameraDirection;
-	glm::vec3 right = cameraSpeed * glm::normalize(glm::cross(cameraDirection, WORLD_UP));
-	glm::vec3 up = cameraSpeed * glm::normalize(glm::cross(right, forward));
+	float speed = 100.0f * deltaTime;
+	glm::vec3 right = speed * glm::normalize( glm::cross(cameraDirection, WORLD_UP) );
+	glm::vec3 forward = speed * glm::normalize( glm::cross(WORLD_UP, right) );
 
 	// Move
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPosition += forward;
+        focus += forward;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPosition -= forward;
+        focus -= forward;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPosition -= right;
+        focus -= right;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPosition += right;
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        cameraPosition += up;
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        cameraPosition -= up;
+        focus += right;
+
+	// Turn
+	const float SENSITIVITY = 100.0f;
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        yaw += SENSITIVITY * deltaTime;
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        yaw -= SENSITIVITY * deltaTime;
+
+	// Constrain pitch
+	pitch = pitch >  89.0f ?  89.0f : pitch;
+	pitch = pitch < -89.0f ? -89.0f : pitch;
 }

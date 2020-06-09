@@ -39,7 +39,7 @@ void VModel::bufferData(float *vertexData)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void VModel::render(float time, glm::mat4 view, glm::mat4 projection)
+void VModel::render(float time, glm::mat4 view, glm::mat4 projection, glm::vec3 focus)
 {
 	// Bind shaders
 	glUseProgram(program);
@@ -49,6 +49,7 @@ void VModel::render(float time, glm::mat4 view, glm::mat4 projection)
 	glUniformMatrix4fv(	glGetUniformLocation(program, "view"),       1, GL_FALSE, glm::value_ptr(view) );
 	glUniformMatrix4fv(	glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection) );
 	glUniformMatrix4fv(	glGetUniformLocation(program, "model"),      1, GL_FALSE, glm::value_ptr(position) );
+	glUniform3fv(		glGetUniformLocation(program, "focus"),      1, glm::value_ptr(focus) );
 
 	// Render
     glBindVertexArray(VAO);

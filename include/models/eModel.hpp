@@ -16,6 +16,6 @@ private:
 public:
     EModel(int nVertices, float *vertexData, int nIndices, unsigned int *indexData, GLuint program, GLenum usage = GL_STATIC_DRAW);
     void bufferData(float *vertexData, unsigned int *indexData);
-    void render(float time, glm::mat4 view, glm::mat4 projection) override;
+    void render(float time, glm::mat4 view, glm::mat4 projection, glm::vec3 focus) override;
     ~EModel();
 };

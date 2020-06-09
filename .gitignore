@@ -4,8 +4,6 @@
 /build/
 # Profiling data
 /profile/
-# Models and textures
-/assets/
 # Third-party code
 /vendor/
 # Executables

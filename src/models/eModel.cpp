@@ -3,7 +3,7 @@
 
 #include "..\..\include\models\eModel.hpp"
 
-EModel::EModel(int nVertices, float *vertexData, int nIndices, unsigned int *indexData, GLuint program, GLenum usage) : Model(nVertices, usage, program)
+EModel::EModel(int nVertices, float *vertexData, int nIndices, unsigned int *indexData, GLuint program, glm::vec3 position, GLenum usage) : Model(nVertices, usage, program, position)
 {
 	// Initialise member variables
 	this->nIndices = nIndices;

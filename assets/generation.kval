@@ -1,6 +1,6 @@
 
 // Map data
-mapWidth:500
+mapWidth:200
 
 // Terrain generation
 terrainMin:-80

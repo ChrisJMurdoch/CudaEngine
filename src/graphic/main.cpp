@@ -88,30 +88,36 @@ int main( int argc, char *argv[] )
 	int nVertices = pow(width-1, 2) * 6;
 
 	// Generate heightmaps
-	float *terrainMap = new float[nVertices], *waterMap = new float[nVertices];
+	float *terrainMap = new float[nVertices], *erodeMap = new float[nVertices], *waterMap = new float[nVertices];
 	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 6);
+	math->generateHeightMap(erodeMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 6);
 	math->generateHeightMap(waterMap, width, wMin, wMax, MathEngine::hash, wPeriod, 1);
 
 	// Heightmaps => Meshes
-	float *terrainMesh = new float[nVertices*6], *waterMesh = new float[nVertices*6];
+	float *terrainMesh = new float[nVertices*6], *erodeMesh = new float[nVertices*6], *waterMesh = new float[nVertices*6];
 	std::thread t1( meshgen::generateVertices, terrainMap, width, terrainMesh, meshgen::landscape );
-	std::thread t2( meshgen::generateVertices, waterMap, width, waterMesh, meshgen::water );
+	std::thread t2( meshgen::generateVertices, erodeMap, width, erodeMesh, meshgen::landscape );
+	std::thread t3( meshgen::generateVertices, waterMap, width, waterMesh, meshgen::water );
 	t1.join();
 	t2.join();
+	t3.join();
 	delete terrainMap;
+	delete erodeMap;
 	delete waterMap;
 
 	// Meshes => Models
-	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, GL_STATIC_DRAW );
-	VModel water = VModel( nVertices, waterMesh, waterProg, GL_STREAM_DRAW );
+	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, glm::vec3(0,0,0), GL_STATIC_DRAW );
+	VModel erode = VModel( nVertices, erodeMesh, terrainProg, glm::vec3(210,0,0), GL_STATIC_DRAW );
+	VModel water = VModel( nVertices, waterMesh, waterProg, glm::vec3(0,0,0), GL_STREAM_DRAW );
 	delete terrainMesh;
+	delete erodeMesh;
 	delete waterMesh;
 
 	// Model array
 	const int nModels = 2;
 	Model *models[nModels];
 	models[0] = &terrain;
-	models[1] = &water;
+	models[1] = &erode;
 
 	// End timer
 	float endLoadTime = glfwGetTime();

@@ -93,6 +93,9 @@ int main( int argc, char *argv[] )
 	math->generateHeightMap(erodeMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 6);
 	math->generateHeightMap(waterMap, width, wMin, wMax, MathEngine::hash, wPeriod, 1);
 
+	// Erode terrain
+	math->erode( erodeMap, width, 10000 );
+
 	// Heightmaps => Meshes
 	float *terrainMesh = new float[nVertices*6], *erodeMesh = new float[nVertices*6], *waterMesh = new float[nVertices*6];
 	std::thread t1( meshgen::generateVertices, terrainMap, width, terrainMesh, meshgen::landscape );
@@ -107,7 +110,7 @@ int main( int argc, char *argv[] )
 
 	// Meshes => Models
 	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, glm::vec3(0,0,0), GL_STATIC_DRAW );
-	VModel erode = VModel( nVertices, erodeMesh, terrainProg, glm::vec3(210,0,0), GL_STATIC_DRAW );
+	VModel erode = VModel( nVertices, erodeMesh, terrainProg, glm::vec3(110,0,0), GL_STATIC_DRAW );
 	VModel water = VModel( nVertices, waterMesh, waterProg, glm::vec3(0,0,0), GL_STREAM_DRAW );
 	delete terrainMesh;
 	delete erodeMesh;

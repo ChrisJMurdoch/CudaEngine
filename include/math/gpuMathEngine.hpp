@@ -19,6 +19,9 @@ public:
     /** Create heightmap on gpu */
     void generateHeightMap(float *out, int dimension, float min, float max, Sample sample, float period, int octaves=1) override;
 
+    /** Erode terrain heightmap */
+    void erode(float *map, int width, int droplets) override;
+
 private:
 
     inline void GPUMathEngine::cudaCheck(cudaError_t err);

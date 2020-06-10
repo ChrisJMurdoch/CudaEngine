@@ -1,11 +1,11 @@
 
 // Map data
-mapWidth:200
+mapWidth:100
 
 // Terrain generation
-terrainMin:-80
-terrainMax:80
-terrainPeriod:100
+terrainMin:-50
+terrainMax:50
+terrainPeriod:50
 
 // Water generation
 waterMin:-0.1

@@ -6,6 +6,15 @@
 #include "..\..\include\math\mathEngine.hpp"
 
 __host__ __device__
+int intHash(int x)
+{
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return x;
+}
+
+__host__ __device__
 float floatHash(int x)
 {
     x = ((x >> 16) ^ x) * 0x45d9f3b;

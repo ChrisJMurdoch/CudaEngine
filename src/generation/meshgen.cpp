@@ -99,7 +99,6 @@ namespace meshgen
         // RGB
         const glm::vec3 snow = glm::vec3(1.0, 1.0, 1.0);
         const glm::vec3 stone = glm::vec3(0.35, 0.3, 0.25);
-        const glm::vec3 grass = glm::vec3(0.2, 0.4, 0.0);
         const glm::vec3 plains = glm::vec3(0.25, 0.6, 0.05);
         const glm::vec3 dirt = glm::vec3(0.35, 0.2, 0.0);
         const glm::vec3 sand = glm::vec3(0.8, 0.8, 0.7);
@@ -111,20 +110,17 @@ namespace meshgen
             0.7
         ); // Water
 
-        else if (triY>20)
-            setColour( vertex, flat, stone, snow, 0.85, 0.9 ); // Snow
+        else if (triY>12)
+            setColour( vertex, flat, stone, snow, 0.9, 0.99 ); // Snow
 
-        else if (triY>14)
-            setColour( vertex, flat, stone, stone, 0.85, 0.9 ); // Mountain
+        else if (triY>6)
+            setColour( vertex, flat, stone, stone, 0.1, 0.9 ); // Mountain
 
-        else if (triY>10)
-            setColour( vertex, flat, dirt, grass, 0.85, 0.9 ); // Grass
-
-        else if (triY>4)
-            setColour( vertex, flat, dirt, plains, 0.85, 0.9 ); // Plains
+        else if (triY>2)
+            setColour( vertex, flat, dirt, plains, 0.8, 0.9 ); // Plains
 
         else
-            setColour( vertex, flat, dirt, sand, 0, 1.0 ); // Sand
+            setColour( vertex, flat, stone, sand, 0, 1.0 ); // Sand
     }
 
     void setColour(float *vertex, float flat, glm::vec3 steepCol, glm::vec3 flatCol, float min, float max)

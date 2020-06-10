@@ -20,7 +20,7 @@ public:
     void generateHeightMap(float *out, int dimension, float min, float max, Sample sample, float period, int octaves=1) override;
 
     /** Erode terrain heightmap */
-    void erode(float *map, int width, int droplets) override;
+    void erode(float *map, int width, int droplets, int radius) override;
 
 private:
 

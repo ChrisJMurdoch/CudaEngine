@@ -73,7 +73,7 @@ void GPUMathEngine::generateHeightMap(float *out, int dimension, float min, floa
     cudaCheck( cudaFree(d_out) );
 }
 
-void GPUMathEngine::erode(float *map, int width, int droplets)
+void GPUMathEngine::erode(float *map, int width, int droplets, int radius)
 {
 
 }

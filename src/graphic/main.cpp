@@ -37,6 +37,9 @@ int viewWidth = 800, viewHeight = 600;
 // Mouse controls
 float yaw = -90, pitch = 0;
 
+// Keyboard controls
+bool eroding = false;
+
 // Camera
 glm::vec3 focus = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 camRelative = glm::vec3(0.0f, 1.0f,  1.0f);
@@ -89,31 +92,28 @@ int main( int argc, char *argv[] )
 
 	// Generate heightmaps
 	float *terrainMap = new float[nVertices], *erodeMap = new float[nVertices], *waterMap = new float[nVertices];
-	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 6);
-	math->generateHeightMap(erodeMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 6);
+	math->generateHeightMap(terrainMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 8);
+	math->generateHeightMap(erodeMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 8);
 	math->generateHeightMap(waterMap, width, wMin, wMax, MathEngine::hash, wPeriod, 1);
 
 	// Erode terrain
-	math->erode( erodeMap, width, 10000 );
+	math->erode( erodeMap, width, 100, 3 );
 
 	// Heightmaps => Meshes
 	float *terrainMesh = new float[nVertices*6], *erodeMesh = new float[nVertices*6], *waterMesh = new float[nVertices*6];
-	std::thread t1( meshgen::generateVertices, terrainMap, width, terrainMesh, meshgen::landscape );
-	std::thread t2( meshgen::generateVertices, erodeMap, width, erodeMesh, meshgen::landscape );
-	std::thread t3( meshgen::generateVertices, waterMap, width, waterMesh, meshgen::water );
+	std::thread t1( meshgen::generateVertices, terrainMap, terrainMap, width, terrainMesh, meshgen::landscape );
+	std::thread t2( meshgen::generateVertices, erodeMap, terrainMap, width, erodeMesh, meshgen::landscape );
+	std::thread t3( meshgen::generateVertices, waterMap, waterMap, width, waterMesh, meshgen::water );
 	t1.join();
 	t2.join();
 	t3.join();
-	delete terrainMap;
-	delete erodeMap;
 	delete waterMap;
 
 	// Meshes => Models
 	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, glm::vec3(0,0,0), GL_STATIC_DRAW );
-	VModel erode = VModel( nVertices, erodeMesh, terrainProg, glm::vec3(110,0,0), GL_STATIC_DRAW );
+	VModel erode = VModel( nVertices, erodeMesh, terrainProg, glm::vec3(width+10,0,0), GL_STREAM_DRAW );
 	VModel water = VModel( nVertices, waterMesh, waterProg, glm::vec3(0,0,0), GL_STREAM_DRAW );
 	delete terrainMesh;
-	delete erodeMesh;
 	delete waterMesh;
 
 	// Model array
@@ -137,6 +137,12 @@ int main( int argc, char *argv[] )
 		float currentTime = glfwGetTime();
 		float deltaTime = currentTime - lastTime;
 		lastTime = currentTime;
+
+		// Erode
+		if (eroding) math->erode( erodeMap, width, 10, 4 );
+		meshgen::generateVertices( erodeMap, terrainMap, width, erodeMesh, meshgen::landscape );
+		VModel e = VModel( nVertices, erodeMesh, terrainProg, glm::vec3(width+10,0,0), GL_STREAM_DRAW );
+		models[1] = &e;
 
 		// Calculate camera position
 		camRelative.x = sin( glm::radians(yaw) );
@@ -170,6 +176,9 @@ int main( int argc, char *argv[] )
 	}
 
 	// Cleanup
+	delete terrainMap;
+	delete erodeMap;
+	delete erodeMesh;
 	glDeleteProgram(terrainProg);
 	glDeleteProgram(waterProg);
 	glfwTerminate();
@@ -240,6 +249,9 @@ void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection
 	float speed = 100.0f * deltaTime;
 	glm::vec3 right = speed * glm::normalize( glm::cross(cameraDirection, WORLD_UP) );
 	glm::vec3 forward = speed * glm::normalize( glm::cross(WORLD_UP, right) );
+
+	// Erode
+    eroding = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
 
 	// Move
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

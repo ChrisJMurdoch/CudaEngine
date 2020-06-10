@@ -35,50 +35,98 @@ void CPUMathEngine::generateHeightMap(float *out, int dimension, float min, floa
     }
 }
 
-float getCellHeight(float *map, int width, int x, int y)
+void brush(float *map, int width, int x, int y, float amount, int radius)
 {
-    return ( x<0 || x>=width || y<0 || y>=width ) ? 99999999 : map[ x + (y*width) ];
+    int dim = (radius*2)+1;
+    amount /= (float)dim*dim;
+
+    // Calc distribution
+    float total = 0;
+    for (int xo=-radius; xo<radius+1; xo++) for (int yo=-radius; yo<radius+1; yo++)
+    {
+        // Out of bounds
+        if  ( x+xo<0 || x+xo>=width || y+yo<0 || y+yo>=width )
+            continue;
+        
+        // Fade
+        float dist = pow( pow( (xo), 2) + pow( (yo), 2), 0.5);
+        float close = (radius - dist) / radius * 2;
+        close = close<0 ? 0 : close;
+
+        total += close;
+    }
+    float mult = dim*dim / total;
+
+    // Add values
+    for (int xo=-radius; xo<radius+1; xo++) for (int yo=-radius; yo<radius+1; yo++)
+    {
+        // Out of bounds
+        if  ( x+xo<0 || x+xo>=width || y+yo<0 || y+yo>=width )
+            continue;
+
+        // Fade
+        float dist = pow( pow( (xo), 2) + pow( (yo), 2), 0.5);
+        float close = (radius - dist) / radius * 2;
+        close = close<0 ? 0 : close;
+
+        // Paint
+        map[ x+xo + ((y+yo)*width) ] += mult*amount*close;
+        total++;
+    }
 }
 
-void erodeCell(float *map, int width, int x, int y, float load)
+float getCellHeight(float *map, int width, int x, int y)
 {
-    // Deposit load
-    map[ x + (y*width) ] += 0;
+    return ( x<0 || x>=width || y<0 || y>=width ) ? 9999 : map[ x + (y*width) ]+1000;
+}
 
-    // Pick next cell
-    int lx=0, ly=0;
-    float lh = getCellHeight(map, width, x, y);
+void erodeCell(float *map, int width, int x, int y, float speed, float sediment, int radius)
+{
+    // Calc height
+    float height = getCellHeight(map, width, x, y);
+
+    // Find lowest cell in 3x3
+    int lx=x, ly=y;
+    float lh = height;
     for (int xo=-1; xo<2; xo++) for (int yo=-1; yo<2; yo++)
     {
-        // Self
-        if ( xo==0 && yo==0 ) continue;
-
         float h = getCellHeight(map, width, x+xo, y+yo);
         if ( h<lh )
         {
-            lx = xo;
-            ly = ly;
+            lx = x+xo;
+            ly = y+yo;
             lh = h;
         }
     }
 
-    // Self is lowest
-    if ( lx==0 && ly==0 )
-        return;
-    
-    // Take dirt
-    load =  ( getCellHeight(map, width, x, y) - lh ) / 10;
-    map[ x + (y*width) ] -= load;
+    // Calculate difference
+    float delta = height - lh;
 
-    erodeCell(map, width, x+lx, y+ly, load);
+    // Stuck
+    if ( -delta >= speed )
+    {
+        brush(map, width, x, y, sediment, radius);
+        return;
+    }
+
+    // CUSTOM
+    speed += delta-0.1f;
+    float capacity = speed;
+    
+    // Alter sediment
+    float deposit = sediment - capacity;
+    brush(map, width, x, y, deposit, radius);
+
+    erodeCell(map, width, lx, ly, speed, capacity, radius);
 }
 
-void CPUMathEngine::erode(float *map, int width, int droplets)
+void CPUMathEngine::erode(float *map, int width, int droplets, int radius)
 {
-    srand(0);
+    static float s_i = 0;
+    srand( s_i++ );
     for (int i=0; i<droplets; i++)
     {
-        int index = rand() % (width*width);
-        erodeCell(map, width, index%width, index/width, 0);
+        int x = rand() % width, y = rand() % width;
+        erodeCell(map, width, x, y, 0, 0, radius);
     }
 }

@@ -13,5 +13,5 @@ public:
     virtual void generateHeightMap(float *out, int dimension, float min, float max, Sample sample, float period, int octaves=1) = 0;
 
     /** Erode terrain heightmap */
-    virtual void erode(float *map, int width, int droplets) = 0;
+    virtual void erode(float *map, int width, int droplets, int radius) = 0;
 };

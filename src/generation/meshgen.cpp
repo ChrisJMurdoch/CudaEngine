@@ -13,7 +13,7 @@ namespace meshgen
     const int COORD_INDEX = 0;
     const int COLOUR_INDEX = 3;
 
-    float *generateVertices(float *nodes, int width, float *out, ColourScheme cs)
+    float *generateVertices(float *nodes, float *source, int width, float *out, ColourScheme cs)
     {
         // Dimensions
         int quadWidth = width-1;
@@ -45,9 +45,9 @@ namespace meshgen
                     glm::vec3 normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
                     float flat = abs(normal.y);
                     float triY = (a.y + b.y + c.y) / 3;
-                    setVertex( &out[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   flat, triY, cs );
-                    setVertex( &out[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   flat, triY, cs );
-                    setVertex( &out[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, flat, triY, cs );
+                    setVertex( &out[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         source[index], origin + row,   flat, triY, cs );
+                    setVertex( &out[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1],       source[index+1], origin + row,   flat, triY, cs );
+                    setVertex( &out[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   source[index+width], origin + row+1, flat, triY, cs );
                     // Tri 2
                     a = glm::vec3( (origin+col+1),   (nodes[index+1]),     (origin+row)   );
                     b = glm::vec3( (origin+col+1), (nodes[index+1+width]), (origin+row+1) );
@@ -55,9 +55,9 @@ namespace meshgen
                     normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
                     flat = abs(normal.y);
                     triY = (a.y + b.y + c.y) / 3;
-                    setVertex( &out[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   flat, triY, cs );
-                    setVertex( &out[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, flat, triY, cs );
-                    setVertex( &out[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, flat, triY, cs );
+                    setVertex( &out[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       source[index+1], origin + row,   flat, triY, cs );
+                    setVertex( &out[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], source[index+1+width], origin + row+1, flat, triY, cs );
+                    setVertex( &out[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index+width],   source[index+width], origin + row+1, flat, triY, cs );
                 }
                 else
                 {
@@ -68,9 +68,9 @@ namespace meshgen
                     glm::vec3 normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
                     float flat = abs(normal.y);
                     float triY = (a.y + b.y + c.y) / 3;
-                    setVertex( &out[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   flat, triY, cs );
-                    setVertex( &out[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, flat, triY, cs );
-                    setVertex( &out[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   origin + row+1, flat, triY, cs );
+                    setVertex( &out[(quad*6 + 0)*VERTEX_SIZE], origin + col,   nodes[index],         source[index], origin + row,   flat, triY, cs );
+                    setVertex( &out[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], source[index+1+width], origin + row+1, flat, triY, cs );
+                    setVertex( &out[(quad*6 + 2)*VERTEX_SIZE], origin + col,   nodes[index+width],   source[index+width], origin + row+1, flat, triY, cs );
                     // Tri 2
                     a = glm::vec3( (origin+col+1),   (nodes[index+1]),     (origin+row)   );
                     b = glm::vec3( (origin+col+1), (nodes[index+1+width]), (origin+row+1) );
@@ -78,9 +78,9 @@ namespace meshgen
                     normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
                     flat = abs(normal.y);
                     triY = (a.y + b.y + c.y) / 3;
-                    setVertex( &out[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       origin + row,   flat, triY, cs );
-                    setVertex( &out[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], origin + row+1, flat, triY, cs );
-                    setVertex( &out[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index],         origin + row,   flat, triY, cs );
+                    setVertex( &out[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, nodes[index+1],       source[index+1], origin + row,   flat, triY, cs );
+                    setVertex( &out[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, nodes[index+1+width], source[index+1+width], origin + row+1, flat, triY, cs );
+                    setVertex( &out[(quad*6 + 5)*VERTEX_SIZE], origin + col,   nodes[index],         source[index], origin + row,   flat, triY, cs );
                 }
                 
                 quad++;
@@ -89,7 +89,7 @@ namespace meshgen
         return out;
     }
 
-    void setVertex(float *vertex, float x, float y, float z, float flat, float triY, ColourScheme cs)
+    void setVertex(float *vertex, float x, float y, float sy, float z, float flat, float triY, ColourScheme cs)
     {
         // XYZ
         vertex[COORD_INDEX+0] = x;
@@ -97,30 +97,32 @@ namespace meshgen
         vertex[COORD_INDEX+2] = z;
 
         // RGB
-        const glm::vec3 snow = glm::vec3(1.0, 1.0, 1.0);
         const glm::vec3 stone = glm::vec3(0.35, 0.3, 0.25);
-        const glm::vec3 plains = glm::vec3(0.25, 0.6, 0.05);
+        const glm::vec3 plains = glm::vec3(0.25, 0.5, 0.05);
         const glm::vec3 dirt = glm::vec3(0.35, 0.2, 0.0);
         const glm::vec3 sand = glm::vec3(0.8, 0.8, 0.7);
+        const glm::vec3 waterC = glm::vec3(0.15, 0.15, 0.4);
 
-        if (cs == water)
+        float eroded =  sy - y;
+
+        if (cs == water) // Water
             setColour( vertex, flat,
-            glm::vec3(0.15, 0.15, 0.4),
-            glm::vec3(0.3, 0.4, 0.8),
-            0.7
-        ); // Water
+                glm::vec3(0.15, 0.15, 0.4),
+                glm::vec3(0.3, 0.4, 0.8),
+                0.7
+            );
 
-        else if (triY>12)
-            setColour( vertex, flat, stone, snow, 0.9, 0.99 ); // Snow
+        else if (eroded<-1) // Pools
+            setColour( vertex, flat, waterC, waterC, 0.8, 0.9 );
 
-        else if (triY>6)
-            setColour( vertex, flat, stone, stone, 0.1, 0.9 ); // Mountain
+        else if (eroded<-0.1) // Bank
+            setColour( vertex, flat, sand, sand, 0, 1.0 );
 
-        else if (triY>2)
-            setColour( vertex, flat, dirt, plains, 0.8, 0.9 ); // Plains
+        else if (eroded>1) // Stone
+            setColour( vertex, flat, stone, stone, 0, 1.0 );
 
-        else
-            setColour( vertex, flat, stone, sand, 0, 1.0 ); // Sand
+        else // Grass
+            setColour( vertex, flat, dirt, plains, 0.8, 0.9 );
     }
 
     void setColour(float *vertex, float flat, glm::vec3 steepCol, glm::vec3 flatCol, float min, float max)

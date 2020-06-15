@@ -98,8 +98,9 @@ namespace meshgen
 
         // RGB
         const glm::vec3 stone = glm::vec3(0.35, 0.3, 0.25);
-        const glm::vec3 plains = glm::vec3(0.25, 0.5, 0.05);
+        const glm::vec3 plains = glm::vec3(0.25, 0.4, 0.05);
         const glm::vec3 dirt = glm::vec3(0.35, 0.2, 0.0);
+        const glm::vec3 sediment = glm::vec3(0.5, 0.5, 0.4);
         const glm::vec3 sand = glm::vec3(0.8, 0.8, 0.7);
         const glm::vec3 waterC = glm::vec3(0.15, 0.15, 0.4);
 
@@ -112,17 +113,17 @@ namespace meshgen
                 0.7
             );
 
-        else if (eroded<-2) // Pools
-            setColour( vertex, flat, waterC, waterC, 0.8, 0.9 );
+        //else if (eroded<-2) // Pools
+            //setColour( vertex, flat, waterC, waterC, 0.8, 0.9 );
 
-        else if (eroded<-1) // Bank
-            setColour( vertex, flat, sand, sand, 0, 1.0 );
+        else if (eroded<-1) // Sediment
+            setColour( vertex, flat, sediment, plains, 0.8, 0.9 );
 
         else if (eroded>1) // Stone
             setColour( vertex, flat, stone, stone, 0, 1.0 );
 
         else // Grass
-            setColour( vertex, flat, dirt, plains, 0.8, 0.9 );
+            setColour( vertex, flat, dirt, plains, 0.9, 0.95 );
     }
 
     void setColour(float *vertex, float flat, glm::vec3 steepCol, glm::vec3 flatCol, float min, float max)

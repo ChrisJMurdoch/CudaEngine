@@ -4,8 +4,8 @@ mapWidth:200
 
 // Terrain generation
 terrainMin:-50
-terrainMax:100
-terrainPeriod:100
+terrainMax:60
+terrainPeriod:75
 
 // Water generation
 waterMin:-0.1

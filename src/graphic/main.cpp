@@ -110,14 +110,17 @@ int main( int argc, char *argv[] )
 	VModel terrain = VModel( nVertices, terrainMesh, terrainProg, glm::vec3(0,0,0), GL_STATIC_DRAW );
 	VModel erode = VModel( nVertices, erodeMesh, terrainProg, glm::vec3(width+10,0,0), GL_STREAM_DRAW );
 	VModel water = VModel( nVertices, waterMesh, waterProg, glm::vec3(0,0,0), GL_STREAM_DRAW );
+	VModel water2 = VModel( nVertices, waterMesh, waterProg, glm::vec3(width+10,0,0), GL_STREAM_DRAW );
 	delete terrainMesh;
 	delete waterMesh;
 
 	// Model array
-	const int nModels = 2;
+	const int nModels = 4;
 	Model *models[nModels];
 	models[0] = &terrain;
 	models[1] = &erode;
+	models[2] = &water;
+	models[3] = &water2;
 
 	// End timer
 	float endLoadTime = glfwGetTime();

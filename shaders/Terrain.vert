@@ -16,7 +16,6 @@ void main()
 {
     // Relay colour and position
     colour = vertColour;
-
     vec4 wp4 = model * vec4(vertPosition, 1.0f);
     worldPosition.x = wp4.x;
     worldPosition.y = wp4.y;

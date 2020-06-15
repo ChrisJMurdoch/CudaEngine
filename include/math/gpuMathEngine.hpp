@@ -24,6 +24,10 @@ public:
 
 private:
 
+    void brush(float *map, int width, int x, int y, float amount, int radius);
+    float getCellHeight(float *map, int width, int x, int y);
+    void erodeCell(float *map, int width, int x, int y, float speed, float sediment, int radius);
+
     inline void GPUMathEngine::cudaCheck(cudaError_t err);
     inline void GPUMathEngine::multiCudaMalloc(int size, void **a, void **b, void **c);
     inline void GPUMathEngine::multiCudaFree(void *a, void *b, void *c);

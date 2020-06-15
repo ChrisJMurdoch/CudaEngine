@@ -96,9 +96,6 @@ int main( int argc, char *argv[] )
 	math->generateHeightMap(erodeMap, width, tMin, tMax, MathEngine::mountain, tPeriod, 8);
 	math->generateHeightMap(waterMap, width, wMin, wMax, MathEngine::hash, wPeriod, 1);
 
-	// Erode terrain
-	math->erode( erodeMap, width, 100, 3 );
-
 	// Heightmaps => Meshes
 	float *terrainMesh = new float[nVertices*6], *erodeMesh = new float[nVertices*6], *waterMesh = new float[nVertices*6];
 	std::thread t1( meshgen::generateVertices, terrainMap, terrainMap, width, terrainMesh, meshgen::landscape );
@@ -139,10 +136,12 @@ int main( int argc, char *argv[] )
 		lastTime = currentTime;
 
 		// Erode
-		if (eroding) math->erode( erodeMap, width, 10, 4 );
-		meshgen::generateVertices( erodeMap, terrainMap, width, erodeMesh, meshgen::landscape );
-		VModel e = VModel( nVertices, erodeMesh, terrainProg, glm::vec3(width+10,0,0), GL_STREAM_DRAW );
-		models[1] = &e;
+		if (eroding)
+		{
+			math->erode( erodeMap, width, 5, 4 );
+			meshgen::generateVertices( erodeMap, terrainMap, width, erodeMesh, meshgen::landscape );
+			erode.bufferData(erodeMesh);
+		}
 
 		// Calculate camera position
 		camRelative.x = sin( glm::radians(yaw) );

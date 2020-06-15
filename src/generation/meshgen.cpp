@@ -112,10 +112,10 @@ namespace meshgen
                 0.7
             );
 
-        else if (eroded<-1) // Pools
+        else if (eroded<-2) // Pools
             setColour( vertex, flat, waterC, waterC, 0.8, 0.9 );
 
-        else if (eroded<-0.1) // Bank
+        else if (eroded<-1) // Bank
             setColour( vertex, flat, sand, sand, 0, 1.0 );
 
         else if (eroded>1) // Stone

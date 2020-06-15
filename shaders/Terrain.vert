@@ -16,7 +16,11 @@ void main()
 {
     // Relay colour and position
     colour = vertColour;
-    worldPosition = vertPosition;
+
+    vec4 wp4 = model * vec4(vertPosition, 1.0f);
+    worldPosition.x = wp4.x;
+    worldPosition.y = wp4.y;
+    worldPosition.z = wp4.z;
 
     // Transform position
     vec4 camRelative = view * model * vec4(vertPosition, 1.0f);

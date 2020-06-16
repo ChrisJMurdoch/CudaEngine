@@ -9,7 +9,7 @@ uniform vec3 focus;
 out vec4 fragColour;
 
 const float glowRadius = 10;
-const float glowWidth = 2;
+const float glowWidth = 1.5;
 const vec4 glowColour = vec4( 0.0f, 0.5f, 1.0f, 1.0f );
 
 void main()

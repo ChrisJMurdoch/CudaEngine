@@ -20,6 +20,12 @@ void CPUMathEngine::generateHeightMap(float *out, int dimension, float min, floa
 {
     for (int y=0; y<dimension; y++) for (int x=0; x<dimension; x++)
     {
+        if ( x==0 || x==dimension-1 || y==0 || y==dimension-1 )
+        {
+            out[y*dimension + x] = -10;
+            continue;
+        }
+
         float value;
         // Custom sampling
         switch ( sample )

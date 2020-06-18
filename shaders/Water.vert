@@ -9,13 +9,13 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform float time;
 
-out vec3 colour;
+out vec4 colour;
 out vec3 worldPosition;
 
 void main()
 {
     // Relay colour and position
-    colour = vertColour;
+    colour = colour = vec4( vertColour, 0.9 );
     vec4 wp4 = model * vec4(vertPosition, 1.0f);
     worldPosition.x = wp4.x;
     worldPosition.y = wp4.y;

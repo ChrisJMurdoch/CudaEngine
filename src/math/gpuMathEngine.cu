@@ -41,6 +41,15 @@ void heightmapKernel(float *out, int dimension, float min, float max, GPUMathEng
     int y = index / dimension;
     do
     {
+        if ( x==0 || x==dimension-1 || y==0 || y==dimension-1 )
+        {
+            out[index] = -10;
+            index += blockDim.x*gridDim.x;
+            x = index % dimension;
+            y = index / dimension;
+            continue;
+        }
+
         // Get sample
         float value;
         switch ( sample )

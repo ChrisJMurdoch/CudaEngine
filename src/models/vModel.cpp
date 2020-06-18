@@ -3,7 +3,7 @@
 
 #include "..\..\include\models\vModel.hpp"
 
-VModel::VModel(int nVertices, float *vertexData, GLuint program, glm::vec3 position, GLenum usage) : Model(nVertices, usage, program, position)
+VModel::VModel(Mesh &mesh, GLuint program, glm::vec3 position, GLenum usage) : Model(mesh.nVertices, usage, program, position)
 {
 	// Initialise member variables
 	glGenVertexArrays(1, &VAO);
@@ -14,7 +14,7 @@ VModel::VModel(int nVertices, float *vertexData, GLuint program, glm::vec3 posit
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
 	// Copy over data
-	glBufferData(GL_ARRAY_BUFFER, nVertices*STRIDE, vertexData, usage);
+	glBufferData(GL_ARRAY_BUFFER, nVertices*STRIDE, mesh.vertexData, usage);
 
 	// Position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, STRIDE, (void*)ATTR_COORDS);

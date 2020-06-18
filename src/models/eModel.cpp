@@ -3,7 +3,7 @@
 
 #include "..\..\include\models\eModel.hpp"
 
-EModel::EModel(int nVertices, float *vertexData, int nIndices, unsigned int *indexData, GLuint program, glm::vec3 position, GLenum usage) : Model(nVertices, usage, program, position)
+EModel::EModel(Mesh &mesh, int nIndices, unsigned int *indexData, GLuint program, glm::vec3 position, GLenum usage) : Model(mesh.nVertices, usage, program, position)
 {
 	// Initialise member variables
 	this->nIndices = nIndices;
@@ -17,7 +17,7 @@ EModel::EModel(int nVertices, float *vertexData, int nIndices, unsigned int *ind
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
 	// Copy over data
-	glBufferData(GL_ARRAY_BUFFER, nVertices*STRIDE, vertexData, usage);
+	glBufferData(GL_ARRAY_BUFFER, nVertices*STRIDE, mesh.vertexData, usage);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, nIndices*sizeof(unsigned int), indexData, usage);
 
 	// Position attribute

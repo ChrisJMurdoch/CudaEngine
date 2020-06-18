@@ -1,5 +1,5 @@
 
-#include "..\..\include\graphic\io.hpp"
+#include "..\..\include\util\io.hpp"
 
 #include "..\..\include\logger\log.hpp"
 
@@ -8,13 +8,15 @@ void divide(std::string input, char delimiter, std::string &a, std::string &b)
     // Get character array
     const char *array = input.c_str();
 
-    // Get delimiter and end location
-    int i = 0, d = -1, n = 0;
+    // Get delimiter location
+    int i = 0, d = -1;
     while ( array[i++] != '\0' )
     {
-        n++;
         if ( array[i] == delimiter )
+        {
             d = i;
+            break;
+        }
     }
     
     if ( d==-1 )
@@ -22,7 +24,7 @@ void divide(std::string input, char delimiter, std::string &a, std::string &b)
 
     // Create substrings
     a = input.substr (0, d);
-    b = input.substr (d+1, n-d-1);
+    b = input.substr (d+1, input.length()-d-1);
 }
 
 std::map<std::string, std::string> mapFile(const char *filename)

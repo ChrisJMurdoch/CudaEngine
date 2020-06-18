@@ -1,0 +1,5 @@
+sampling:perlin
+octaves:8
+period:50
+min:-50
+max:50

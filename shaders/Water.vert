@@ -15,7 +15,7 @@ out vec3 worldPosition;
 void main()
 {
     // Relay colour and position
-    colour = colour = vec4( vertColour, 0.9 );
+    colour = colour = vec4( vertColour, 0.85f );
     vec4 wp4 = model * vec4(vertPosition, 1.0f);
     worldPosition.x = wp4.x;
     worldPosition.y = wp4.y;

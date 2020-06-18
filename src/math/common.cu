@@ -167,33 +167,23 @@ __host__ __device__
 float mountain(int x, int y, float period)
 {
     // Amplitudes
-    float plateAmp = 32;
-    float mountainAmp =  16;
-    float a3 =  8;
-    float a4 =  4;
-    float a5 =  2;
-    float a6 =  1;
+    float a1 = 32;
+    float a2 = 16;
+    float a3 = 8;
+    float a4 = 4;
+    float a5 = 2;
+    float a6 = 1;
 
     // Terrain samples
-    float plate    = perlinSample(x, y, period);
-    float mountain = perlinSample(x, y, period/2);
-    float s3       = perlinSample(x, y, period/4);
-    float s4       = perlinSample(x, y, period/8);
-    float s5       = perlinSample(x, y, period/16);
-    float s6       = perlinSample(x, y, period/32);
-
-    // Diverge and flatten plate
-    plate = diverge(diverge(diverge(plate)));
-    plate = 0.4 + (plate*0.2);
-
-    // Diverge mountains
-    mountain = diverge( mountain );
-
-    // Smooth surface
-    s3 = squash( s3 );
+    float s1 = perlinSample(x, y, period/ 1);
+    float s2 = perlinSample(x, y, period/ 2);
+    float s3 = perlinSample(x, y, period/ 4);
+    float s4 = perlinSample(x, y, period/ 8);
+    float s5 = perlinSample(x, y, period/16);
+    float s6 = perlinSample(x, y, period/0.1);
 
     // Merge
-    float amp = plateAmp + mountainAmp + a3 + a4 + a5 + a6;
-    float total = ( (plate*plateAmp) + (mountain*mountainAmp) + (s3*a3) + (s4*a4) + (s5*a5)  + (s6*a6) ) / amp;
+    float amp = a1 + a2 + a3 + a4 + a5 + a6;
+    float total = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5)  + (s6*a6) ) / amp;
     return total;
 }

@@ -45,6 +45,7 @@ void setVertex(float *vertex, float x, float y, float sy, float z, float flat, f
     const glm::vec3 dirt = glm::vec3(0.35, 0.2, 0.0);
     const glm::vec3 sediment = glm::vec3(0.5, 0.5, 0.4);
     const glm::vec3 sand = glm::vec3(0.8, 0.8, 0.7);
+    const glm::vec3 snow = glm::vec3(0.95, 0.95, 0.95);
     const glm::vec3 waterC = glm::vec3(0.15, 0.15, 0.4);
 
     float eroded =  sy - y;
@@ -56,17 +57,17 @@ void setVertex(float *vertex, float x, float y, float sy, float z, float flat, f
             0.7, 1.0
         );
 
-    //else if (eroded<-2) // Pools
-        //setColour( vertex, flat, waterC, waterC, 0.8, 0.9 );
+    else if (triY>11) // Snowy
+        setColour( vertex, flat, stone, snow, 0.9, 0.95 );
 
-    else if (eroded<-1) // Sediment
-        setColour( vertex, flat, sediment, plains, 0.8, 0.9 );
+    else if (triY>5) // Mountain
+        setColour( vertex, flat, stone, stone, 0.8, 0.9 );
 
-    else if (eroded>1) // Stone
-        setColour( vertex, flat, stone, stone, 0, 1.0 );
+    else if (triY>2) // Plains
+        setColour( vertex, flat, dirt, plains, 0.8, 0.9 );
 
-    else // Grass
-        setColour( vertex, flat, dirt, plains, 0.9, 0.95 );
+    else // Sand
+        setColour( vertex, flat, sand, sand, 0.8, 0.9 );
 }
 
 Mesh::Mesh( Heightmap &primary, ColourScheme cs ) : Mesh( primary, primary, cs ) {}

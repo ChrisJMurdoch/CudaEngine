@@ -4,7 +4,7 @@
 
 // OpenGL interface
 #include <graphic/display.hpp>
-#include <graphic/vModel.hpp>
+#include <graphic/model.hpp>
 
 // Procedural generation classes
 #include <generation/heightmap.hpp>
@@ -44,6 +44,9 @@ int main( int argc, char *argv[] )
     MathEngine *math = hardware ? (MathEngine *)&GPUMathEngine() : (MathEngine *)&CPUMathEngine();
     Log::print( Log::message, hardware ? "Using Cuda acceleration." : "Not using Cuda acceleration." );
 
+    // Profile load time
+    std::chrono::steady_clock::time_point loadStart = std::chrono::steady_clock::now();
+
     // Create OpenGL display
     Display display = Display();
 
@@ -54,12 +57,18 @@ int main( int argc, char *argv[] )
     // Generate terrain models
     Heightmap terrainMap( mapFile("assets/generation/terrain.kval"), 500, math );
     Heightmap waterMap( mapFile("assets/generation/water.kval"), 500, math );
-	VModel terrain = VModel( Mesh( terrainMap, Mesh::landscape ), terrainProg, GL_STREAM_DRAW );
-	VModel water = VModel( Mesh( waterMap, Mesh::water ), waterProg, GL_STATIC_DRAW );
+	Model terrain = Model( Mesh( terrainMap, Mesh::landscape ), terrainProg, GL_STREAM_DRAW );
+	Model water = Model( Mesh( waterMap, Mesh::water ), waterProg, GL_STATIC_DRAW );
 
     // Add terrain models to display
     display.addModel(terrain);
     display.addModel(water);
+
+    // Profile load time
+    std::chrono::steady_clock::time_point loadEnd = std::chrono::steady_clock::now();
+    float loadTime = std::chrono::duration_cast<std::chrono::microseconds>(loadEnd - loadStart).count() / 1000000.0f;
+    Log::print( Log::message, "Loading time: ", Log::NO_NEWLINE );
+    Log::print( Log::message, loadTime );
 
     // Start rendering loop
     std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();

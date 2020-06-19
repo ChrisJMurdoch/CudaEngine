@@ -1,5 +1,5 @@
 
-#include "..\..\include\generation\heightmap.hpp"
+#include <generation\heightmap.hpp>
 
 Heightmap::Heightmap( std::map<std::string, std::string> &settings, int width, MathEngine *math )
 {

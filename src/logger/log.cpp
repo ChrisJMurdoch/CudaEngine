@@ -1,7 +1,7 @@
 
-#include <iostream>
+#include <logger\log.hpp>
 
-#include "..\..\include\logger\log.hpp"
+#include <iostream>
 
 // Default logger to messages and up
 Log::Level Log::level = Log::message;

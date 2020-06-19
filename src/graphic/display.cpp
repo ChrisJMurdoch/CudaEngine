@@ -1,29 +1,18 @@
 
-// === INCLUDES ===
+#include <graphic/display.hpp>
 
-// Header
-#include "..\..\include\graphic\display.hpp"
+#include <logger/log.hpp>
 
-// Engine
-#include "..\..\include\logger\log.hpp"
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
-// SIMD Vector math
-#include <glm/gtc/matrix_transform.hpp>
-
-// Standard headers
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <list>
 
-
-// === CONSTANTS ===
-
 // Vector constants
 const glm::vec3 WORLD_UP = glm::vec3(0.0f, 1.0f,  0.0f);
-
-
-// === VARIABLES ===
 
 // Window
 GLFWwindow *window = nullptr;
@@ -31,9 +20,6 @@ int viewWidth = 800, viewHeight = 600;
 
 // Mouse controls
 float yaw = -90, pitch = 0;
-
-// Keyboard controls
-bool eroding = false;
 
 // Programs
 std::list<GLuint> programs;
@@ -46,11 +32,7 @@ glm::vec3 focusPos = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 rCamPos = glm::vec3(0.0f, 1.0f,  1.0f);
 float camDistance = 100.0f;
 
-
-// === CALLBACKS ===
-
-void mouseCallback(GLFWwindow* window, double xpos, double ypos)
-{ }
+void mouseCallback(GLFWwindow* window, double xpos, double ypos) {}
 
 void scrollCallback(GLFWwindow* window, double xOff, double yOff)
 {
@@ -64,8 +46,6 @@ void resizeCallback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-// === FUNCTIONS ===
-
 void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection)
 {
 	// Close window
@@ -76,9 +56,6 @@ void processInput(GLFWwindow *window, float deltaTime, glm::vec3 cameraDirection
 	float speed = 100.0f * deltaTime;
 	glm::vec3 right = speed * glm::normalize( glm::cross(cameraDirection, WORLD_UP) );
 	glm::vec3 forward = speed * glm::normalize( glm::cross(WORLD_UP, right) );
-
-	// Erode
-    eroding = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
 
 	// Move
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

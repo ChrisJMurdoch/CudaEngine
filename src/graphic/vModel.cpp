@@ -1,7 +1,7 @@
 
-#include <glad/glad.h>
+#include <graphic\vModel.hpp>
 
-#include "..\..\include\graphic\vModel.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 VModel::VModel(Mesh &mesh, GLuint program, GLenum usage) : Model(mesh.nVertices, program, usage)
 {

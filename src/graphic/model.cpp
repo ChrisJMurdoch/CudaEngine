@@ -1,7 +1,5 @@
 
-#include <glad/glad.h>
-
-#include "..\..\include\graphic\model.hpp"
+#include <graphic/model.hpp>
 
 Model::Model(int nVertices, GLuint program, GLenum usage)
 {

@@ -1,10 +1,9 @@
 
 #pragma once
 
-#include <glad/glad.h>
+#include <graphic/model.hpp>
 
-#include "..\..\include\graphic\model.hpp"
-#include "..\..\include\generation\mesh.hpp"
+#include <generation/mesh.hpp>
 
 /** VBO mesh model */
 class VModel : public Model

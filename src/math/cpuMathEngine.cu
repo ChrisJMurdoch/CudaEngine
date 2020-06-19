@@ -1,18 +1,11 @@
 
-#include "..\..\include\math\cpuMathEngine.hpp"
+#include <math/cpuMathEngine.hpp>
 
-#include "..\..\include\logger\log.hpp"
-
-// GLM
 #include <glm/glm.hpp>
-
-// Host code
 namespace cpucommon
 {
-    #include "..\..\src\math\common.cu"
+    #include "common.cu"
 }
-
-#include <cmath>
 
 // FUNCTIONS
 

@@ -2,8 +2,7 @@
 // This has to be directly included into a translation unit as it contains
 // device code, wrap include statement in a namespace to avoid linker errors.
 
-// Enums
-#include "..\..\include\math\mathEngine.hpp"
+#pragma once
 
 __host__ __device__
 int intHash(int x)

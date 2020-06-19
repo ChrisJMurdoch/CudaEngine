@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "..\..\include\math\mathEngine.hpp"
+#include <math/mathEngine.hpp>
 
 class CPUMathEngine : public MathEngine
 {

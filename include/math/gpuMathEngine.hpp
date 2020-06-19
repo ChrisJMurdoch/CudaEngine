@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include <cuda_runtime_api.h>
+#include <math/mathEngine.hpp>
 
-#include "..\..\include\math\mathEngine.hpp"
+#include <cuda_runtime_api.h>
 
 class GPUMathEngine : public MathEngine
 {

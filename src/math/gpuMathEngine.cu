@@ -1,17 +1,14 @@
 
-// Engine
-#include "..\..\include\logger\log.hpp"
-#include "..\..\include\math\gpuMathEngine.hpp"
+#include <math/gpuMathEngine.hpp>
 
-// GLM & CUDA
+#include <logger/log.hpp>
+
 #include "cuda.h"
 #define GLM_FORCE_CUDA
 #include <glm/glm.hpp>
-
-// Device code
 namespace gpucommon
 {
-    #include "..\..\src\math\common.cu"
+    #include "common.cu"
 }
 
 // HARDWARE SETTINGS

@@ -3,22 +3,22 @@
 // === ENGINE INCLUDES ===
 
 // OpenGL interface
-#include "..\..\include\graphic\display.hpp"
-#include "..\..\include\graphic\vModel.hpp"
+#include <graphic/display.hpp>
+#include <graphic/vModel.hpp>
 
 // Procedural generation classes
-#include "..\..\include\generation\heightmap.hpp"
-#include "..\..\include\generation\mesh.hpp"
+#include <generation/heightmap.hpp>
+#include <generation/mesh.hpp>
 
 // Math engines
-#include "..\..\include\math\cpuMathEngine.hpp"
-#include "..\..\include\math\gpuMathEngine.hpp"
+#include <math/cpuMathEngine.hpp>
+#include <math/gpuMathEngine.hpp>
 
 // Engine logging system
-#include "..\..\include\logger\log.hpp"
+#include <logger/log.hpp>
 
 // .kval parser
-#include "..\..\include\util\io.hpp"
+#include <util/io.hpp>
 
 
 // === LIBRARY INCLUDES ===
@@ -48,8 +48,8 @@ int main( int argc, char *argv[] )
     Display display = Display();
 
 	// Add shader programs to display
-	GLuint terrainProg = display.addShaderProg( "shaders\\Terrain.vert", "shaders\\FShader.frag" );
-	GLuint waterProg = display.addShaderProg( "shaders\\Water.vert", "shaders\\FShader.frag" );
+	GLuint terrainProg = display.addShaderProg( "shaders/Terrain.vert", "shaders/FShader.frag" );
+	GLuint waterProg = display.addShaderProg( "shaders/Water.vert", "shaders/FShader.frag" );
 
     // Generate terrain models
     Heightmap terrainMap( mapFile("assets/generation/terrain.kval"), 500, math );

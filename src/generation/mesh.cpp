@@ -1,13 +1,9 @@
 
-#include "..\..\include\generation\mesh.hpp"
+#include <generation\mesh.hpp>
 
-#include "..\..\include\logger\log.hpp"
+#include <logger\log.hpp>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <cmath>
-#include <exception>
 
 void setColour(float *vertex, float flat, glm::vec3 steepCol, glm::vec3 flatCol, float min, float max)
 {

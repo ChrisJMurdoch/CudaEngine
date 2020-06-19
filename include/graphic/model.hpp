@@ -19,15 +19,11 @@ protected:
     int nVertices;
     GLuint VAO, VBO;
 
-    // Model data
-    glm::mat4 position;
-
 public:
     // Shader data
     GLuint program;
     
-    Model(int nVertices, GLenum usage, GLuint program, glm::vec3 position);
-    void place(glm::vec3 position);
+    Model(int nVertices, GLuint program, GLenum usage);
 
-    virtual void render(float time, glm::mat4 view, glm::mat4 projection, glm::vec3 focus) = 0;
+    virtual void render( glm::vec3 position ) = 0;
 };

@@ -5,8 +5,6 @@
 #include "..\..\include\graphic\display.hpp"
 
 // Engine
-#include "..\..\include\models\vModel.hpp"
-#include "..\..\include\models\eModel.hpp"
 #include "..\..\include\logger\log.hpp"
 
 // SIMD Vector math
@@ -36,6 +34,9 @@ float yaw = -90, pitch = 0;
 
 // Keyboard controls
 bool eroding = false;
+
+// Programs
+std::list<GLuint> programs;
 
 // Models
 std::list<Model *> models;
@@ -141,44 +142,42 @@ Display::Display()
 	glClearColor(0.3f, 0.7f, 0.9f, 1.0f);
 }
 
-void Display::start()
+void Display::refresh( float currentTime, float deltaTime )
 {
-	// Main loop
-	float lastTime = glfwGetTime();
-	while( !glfwWindowShouldClose(window) )
+	// Calculate camera position
+	rCamPos.x = sin( glm::radians(yaw) );
+	rCamPos.y = camDistance / 100;
+	rCamPos.z = cos( glm::radians(yaw) );
+	rCamPos = camDistance * glm::normalize(rCamPos);
+
+	// Move
+	processInput( window, deltaTime, glm::normalize(-rCamPos) );
+
+	// Clear screen
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Common matrices
+	glm::mat4 view = glm::lookAt( focusPos+rCamPos, focusPos, WORLD_UP );
+	glm::mat4 projection = glm::perspective( glm::radians(60.0f), (float)viewWidth/(float)viewHeight, 0.1f, 1000.0f ); // Clip 10cm - 1km
+
+	// Update shader uniforms
+	for( GLuint program : programs )
 	{
-		// Get time-delta
-		float currentTime = glfwGetTime();
-		float deltaTime = currentTime - lastTime;
-		lastTime = currentTime;
-
-		// Calculate camera position
-		rCamPos.x = sin( glm::radians(yaw) );
-		rCamPos.y = camDistance / 100;
-		rCamPos.z = cos( glm::radians(yaw) );
-		rCamPos = camDistance * glm::normalize(rCamPos);
-
-		// Move
-		processInput( window, deltaTime, glm::normalize(-rCamPos) );
-
-		// Clear screen
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Common matrices
-		glm::mat4 view = glm::lookAt( focusPos+rCamPos, focusPos, WORLD_UP );
-		glm::mat4 projection = glm::perspective( glm::radians(60.0f), (float)viewWidth/(float)viewHeight, 0.1f, 1000.0f ); // Clip 10cm - 1km
-
-		// Render models
-		for( Model *model : models )
-			model->render( currentTime, view, projection, focusPos );
-
-		// Check inputs and display
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		glUseProgram(program);
+		glUniform1f(		glGetUniformLocation(program, "time"),       currentTime);
+		glUniformMatrix4fv(	glGetUniformLocation(program, "view"),       1, GL_FALSE, glm::value_ptr(view) );
+		glUniformMatrix4fv(	glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection) );
+		glUniform3fv(		glGetUniformLocation(program, "focus"),      1, glm::value_ptr(focusPos) );
+		glUseProgram(0);
 	}
 
-	// Cleanup
-	glfwTerminate();
+	// Render models
+	for( Model *model : models )
+		model->render( glm::vec3(0,0,0) );
+
+	// Check inputs and display
+	glfwSwapBuffers(window);
+	glfwPollEvents();
 }
 
 void Display::addModel(Model &model)
@@ -253,9 +252,15 @@ void loadShaders(const char *vertFilePath, const char *fragFilePath, GLuint &pro
 	glDeleteShader(fragShaderID);
 }
 
-GLuint Display::addShader(const char *vertFilePath, const char *fragFilePath)
+GLuint Display::addShaderProg(const char *vertFilePath, const char *fragFilePath)
 {
 	GLuint prog;
 	loadShaders(vertFilePath, fragFilePath, prog);
+	programs.push_back(prog);
 	return prog;
+}
+
+bool Display::shouldClose()
+{
+	return glfwWindowShouldClose(window);
 }

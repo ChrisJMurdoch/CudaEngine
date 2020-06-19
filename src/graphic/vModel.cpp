@@ -1,9 +1,9 @@
 
 #include <glad/glad.h>
 
-#include "..\..\include\models\vModel.hpp"
+#include "..\..\include\graphic\vModel.hpp"
 
-VModel::VModel(Mesh &mesh, GLuint program, glm::vec3 position, GLenum usage) : Model(mesh.nVertices, usage, program, position)
+VModel::VModel(Mesh &mesh, GLuint program, GLenum usage) : Model(mesh.nVertices, program, usage)
 {
 	// Initialise member variables
 	glGenVertexArrays(1, &VAO);
@@ -39,17 +39,13 @@ void VModel::bufferData(float *vertexData)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void VModel::render(float time, glm::mat4 view, glm::mat4 projection, glm::vec3 focus)
+void VModel::render( glm::vec3 position )
 {
 	// Bind shaders
-	glUseProgram(program);
+	glUseProgram(program);                   
 
-	// Bind uniforms
-	glUniform1f(		glGetUniformLocation(program, "time"), time);
-	glUniformMatrix4fv(	glGetUniformLocation(program, "view"),       1, GL_FALSE, glm::value_ptr(view) );
-	glUniformMatrix4fv(	glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection) );
-	glUniformMatrix4fv(	glGetUniformLocation(program, "model"),      1, GL_FALSE, glm::value_ptr(position) );
-	glUniform3fv(		glGetUniformLocation(program, "focus"),      1, glm::value_ptr(focus) );
+	// Bind uniform
+	glUniformMatrix4fv(	glGetUniformLocation(program, "model"), 1, GL_FALSE, glm::value_ptr( glm::translate( glm::mat4(1.0f), position ) ) );
 
 	// Render
     glBindVertexArray(VAO);

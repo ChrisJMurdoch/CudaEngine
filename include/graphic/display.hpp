@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "..\..\include\models\model.hpp"
+#include "..\..\include\graphic\model.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -12,7 +12,8 @@ class Display
 public:
 
     Display();
-    void start();
-    GLuint addShader(const char *vertFilePath, const char *fragFilePath);
+    void refresh( float currentTime, float deltaTime );
+    GLuint addShaderProg(const char *vertFilePath, const char *fragFilePath);
     void addModel(Model &model);
+    bool shouldClose();
 };

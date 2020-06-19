@@ -1,7 +1,7 @@
 
-#include <generation\mesh.hpp>
+#include <generation/mesh.hpp>
 
-#include <logger\log.hpp>
+#include <logger/log.hpp>
 
 #include <glm/glm.hpp>
 

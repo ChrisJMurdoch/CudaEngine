@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <generation\heightmap.hpp>
+#include <generation/heightmap.hpp>
 
 class Mesh
 {

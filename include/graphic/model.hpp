@@ -12,11 +12,6 @@
 class Model
 {
 private:
-    // Vertex attribute data
-    static const int STRIDE = 6*sizeof(float);
-    static const long long ATTR_COORDS = 0*sizeof(float);
-    static const long long ATTR_COLOUR = 3*sizeof(float);
-
     // Mesh data
     GLenum usage;
     int nVertices;
@@ -24,6 +19,13 @@ private:
 
     // Shader data
     GLuint program;
+
+public:
+    // Vertex attribute data
+    static const int VERTEX_STRIDE = 9;
+    static const int ATTR_COORDS = 0;
+    static const int ATTR_COLOUR = 3;
+    static const int ATTR_NORMAL = 6;
 
 public:
     Model(Mesh &mesh, GLuint program, GLenum usage = GL_STATIC_DRAW);

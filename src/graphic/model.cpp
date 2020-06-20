@@ -18,15 +18,19 @@ Model::Model(Mesh &mesh, GLuint program, GLenum usage)
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
 	// Copy over data
-	glBufferData(GL_ARRAY_BUFFER, nVertices*STRIDE, mesh.vertexData, usage);
+	glBufferData(GL_ARRAY_BUFFER, nVertices*VERTEX_STRIDE*sizeof(float), mesh.vertexData, usage);
 
 	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, STRIDE, (void*)ATTR_COORDS);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_STRIDE*sizeof(float), (void*)(ATTR_COORDS*sizeof(float)));
 	glEnableVertexAttribArray(0);
 
 	// Colour attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, STRIDE, (void*)ATTR_COLOUR);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_STRIDE*sizeof(float), (void*)(ATTR_COLOUR*sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	// Normal attribute
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VERTEX_STRIDE*sizeof(float), (void*)(ATTR_NORMAL*sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	// Unbind buffers
 	glBindVertexArray(0);
@@ -39,7 +43,7 @@ void Model::bufferData(float *vertexData)
 		throw "Buffer not rewritable.";
 	
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, nVertices*STRIDE, vertexData);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, nVertices*VERTEX_STRIDE*sizeof(float), vertexData);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 

@@ -3,6 +3,7 @@
 
 in vec4 colour;
 in vec3 worldPosition;
+in float flatness;
 
 uniform vec3 focus;
 
@@ -21,5 +22,7 @@ void main()
     float glow = 1 - pow( ( (dist-glowRadius) * 2 * (1/glowWidth)), 2 );
     glow = glow<0 ? 0 : glow;
 
-    fragColour = colour + glow*glowColour;
+    vec4 lit = ( colour * pow(flatness, 1) );
+    lit.a = colour.a;
+    fragColour = lit + glow*glowColour;
 }

@@ -2,146 +2,119 @@
 #include <generation/mesh.hpp>
 
 #include <logger/log.hpp>
+#include <graphic/model.hpp>
 
 #include <glm/glm.hpp>
 
-void setColour(float *vertex, float flat, glm::vec3 steepCol, glm::vec3 flatCol, float min, float max)
+float range( float min, float max, float val )
 {
-    // Validate input
-    if ( min<0 || min>=1 || max <=0 || max >1 )
-        Log::print(Log::error, "setColour: illegal args");
-
-    // Calculate transition
-    float adjusted;
-    if ( min == max )
-        adjusted = flat<min ? 0 : 1;
-    else
-        adjusted = (flat-min) / (max-min);
-
-    // Clip transition
-    adjusted = adjusted<0.0 ? 0.0 : adjusted;
-    adjusted = adjusted>1.0 ? 1.0 : adjusted;
-
-    // Set vertex
-    vertex[Mesh::COLOUR_INDEX+0] = ( (1-adjusted)*steepCol.r + adjusted*flatCol.r ) * flat;
-    vertex[Mesh::COLOUR_INDEX+1] = ( (1-adjusted)*steepCol.g + adjusted*flatCol.g ) * flat;
-    vertex[Mesh::COLOUR_INDEX+2] = ( (1-adjusted)*steepCol.b + adjusted*flatCol.b ) * flat;
+    if (val<min) val = min;
+    if (val>max) val = max;
+    return (val - min) / (max - min);
 }
 
-void setVertex(float *vertex, float x, float y, float sy, float z, float flat, float triY, Mesh::ColourScheme cs)
+glm::vec3 lerp( glm::vec3 a, glm::vec3 b, float x )
 {
-    // XYZ
-    vertex[Mesh::COORD_INDEX+0] = x;
-    vertex[Mesh::COORD_INDEX+1] = y;
-    vertex[Mesh::COORD_INDEX+2] = z;
+    return x*b + (1-x)*a;
+}
 
-    // RGB
-    const glm::vec3 stone = glm::vec3(0.35, 0.3, 0.25);
-    const glm::vec3 plains = glm::vec3(0.25, 0.4, 0.05);
-    const glm::vec3 dirt = glm::vec3(0.35, 0.2, 0.0);
-    const glm::vec3 sediment = glm::vec3(0.5, 0.5, 0.4);
+void setVec( float *vertex, glm::vec3 vec )
+{
+    vertex[0] = vec.x;
+    vertex[1] = vec.y;
+    vertex[2] = vec.z;
+}
+
+void setVertex(float *vertex, glm::vec3 pos, glm::vec3 normal, float triY, Mesh::ColourScheme cs)
+{
+    setVec( &vertex[Model::ATTR_COORDS], pos );
+    setVec( &vertex[Model::ATTR_NORMAL], normal );
+
+    const glm::vec3 waterColour = glm::vec3(0.15, 0.25, 0.4);
     const glm::vec3 sand = glm::vec3(0.8, 0.8, 0.7);
+    const glm::vec3 dirt = glm::vec3(0.35, 0.2, 0.0);
+    const glm::vec3 grass = glm::vec3(0.25, 0.4, 0.05);
+    const glm::vec3 stone = glm::vec3(0.35, 0.3, 0.25);
     const glm::vec3 snow = glm::vec3(0.95, 0.95, 0.95);
-    const glm::vec3 waterC = glm::vec3(0.15, 0.15, 0.4);
 
-    float eroded =  sy - y;
+    glm::vec3 plains = lerp( dirt, grass, range( 0.7, 0.9, normal.y ) );
+    glm::vec3 mountain = lerp( stone, snow, range( 0.7, 0.9, normal.y ) );
 
-    if (cs == Mesh::water) // Water
-        setColour( vertex, flat,
-            glm::vec3(0.15, 0.15, 0.4),
-            glm::vec3(0.3, 0.4, 0.8),
-            0.7, 1.0
-        );
+    float SAND_DIRT = 1.5, DIRT_PLAINS = 2, PLAINS = 3, PLAINS_STONE = 5, STONE = 6, STONE_MOUNTAIN = 12, MOUNTAIN = 15;
 
-    else if (triY>11) // Snowy
-        setColour( vertex, flat, stone, snow, 0.9, 0.95 );
+    if ( cs == Mesh::water )
+        setVec( &vertex[Model::ATTR_COLOUR], waterColour );
 
-    else if (triY>5) // Mountain
-        setColour( vertex, flat, stone, stone, 0.8, 0.9 );
+    else if ( triY<SAND_DIRT ) // Sand
+        setVec( &vertex[Model::ATTR_COLOUR], sand );
 
-    else if (triY>2) // Plains
-        setColour( vertex, flat, dirt, plains, 0.8, 0.9 );
+    else if ( triY<DIRT_PLAINS ) // Sand - Dirt
+        setVec( &vertex[Model::ATTR_COLOUR], lerp( sand, dirt, range( SAND_DIRT, DIRT_PLAINS, triY ) ) );
 
-    else // Sand
-        setColour( vertex, flat, sand, sand, 0.8, 0.9 );
+    else if ( triY<PLAINS ) // Dirt - Plains
+        setVec( &vertex[Model::ATTR_COLOUR], lerp( dirt, plains, range( DIRT_PLAINS, PLAINS, triY ) ) );
+
+    else if ( triY<PLAINS_STONE ) // Plains
+        setVec( &vertex[Model::ATTR_COLOUR], plains );
+
+    else if ( triY<STONE ) // Plains - Stone
+        setVec( &vertex[Model::ATTR_COLOUR], lerp( plains, stone, range( PLAINS_STONE, STONE, triY ) ) );
+
+    else if ( triY<STONE_MOUNTAIN ) // Stone
+        setVec( &vertex[Model::ATTR_COLOUR], stone );
+
+    else // Stone - Mountain
+        setVec( &vertex[Model::ATTR_COLOUR], lerp( stone, mountain, range( STONE_MOUNTAIN, MOUNTAIN, triY ) ) );
+
+}
+
+void setTri( float *vertexData, glm::vec3 a, glm::vec3 b, glm::vec3 c, Mesh::ColourScheme cs )
+{
+    glm::vec3 normal = glm::normalize( glm::cross( (a-b), (a-c) ) );
+    float flatness = normal.y;
+    float triY = (a.y + b.y + c.y) / 3;
+    setVertex( &vertexData[0*Model::VERTEX_STRIDE], a, normal, triY, cs );
+    setVertex( &vertexData[1*Model::VERTEX_STRIDE], b, normal, triY, cs );
+    setVertex( &vertexData[2*Model::VERTEX_STRIDE], c, normal, triY, cs );
+}
+
+void setQuad( float x, float y, float *primary, float *vertexData, int width, Mesh::ColourScheme cs, bool rotate )
+{
+    // Quad corners
+    glm::vec3 a = glm::vec3( (x),   (primary[0]),       (y)   );
+    glm::vec3 b = glm::vec3( (x+1), (primary[1]),       (y)   );
+    glm::vec3 c = glm::vec3( (x),   (primary[width]),   (y+1) );
+    glm::vec3 d = glm::vec3( (x+1), (primary[width+1]), (y+1) );
+
+    if (rotate)
+    {
+        setTri( &vertexData[0*Model::VERTEX_STRIDE], a, c, b, cs );
+        setTri( &vertexData[3*Model::VERTEX_STRIDE], b, c, d, cs );
+    }
+    else
+    {
+        setTri( &vertexData[0*Model::VERTEX_STRIDE], c, d, a, cs );
+        setTri( &vertexData[3*Model::VERTEX_STRIDE], d, b, a, cs );
+    }
 }
 
 Mesh::Mesh( Heightmap &primary, ColourScheme cs ) : Mesh( primary, primary, cs ) {}
-
 Mesh::Mesh( Heightmap &primary, Heightmap &compare, ColourScheme cs )
 {
-    // Get data
+    // Calculate dimensions
     int width = pow( primary.nNodes, 0.5 );
-    nVertices = primary.nNodes * 6;
-    vertexData = new float[nVertices * VERTEX_SIZE];
-
-    // Dimensions
     int quadWidth = width-1;
-    float origin = (1-width) / 2;
+    this->nVertices = pow( quadWidth, 2 ) * 6;
+    this->vertexData = new float[nVertices * Model::VERTEX_STRIDE];
+
+    // Centre model
+    float offset = (1-width) / 2.0f;
 
     int quad = 0;
     bool toggle = false;
-    for (int row=0; row<quadWidth; row++)
-    {
-        for(int col=0; col<width; col++)
-        {
-            // Quad
-            if (col == quadWidth) // Skip if i & i+1 are straddling new row
-                continue;
-
-            // Node index
-            int index = row*width + col;
-
-            // Switch between topleft tri and topright tri
-            if (toggle = !toggle)
-            {
-                // Tri 1
-                glm::vec3 a = glm::vec3( (origin+col),   (primary.nodes[index]),       (origin+row)   );
-                glm::vec3 b = glm::vec3( (origin+col+1), (primary.nodes[index+1]),     (origin+row)   );
-                glm::vec3 c = glm::vec3( (origin+col),   (primary.nodes[index+width]), (origin+row+1) );
-                glm::vec3 normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
-                float flat = abs(normal.y);
-                float triY = (a.y + b.y + c.y) / 3;
-                setVertex( &vertexData[(quad*6 + 0)*VERTEX_SIZE], origin + col,   primary.nodes[index],         compare.nodes[index], origin + row,   flat, triY, cs );
-                setVertex( &vertexData[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, primary.nodes[index+1],       compare.nodes[index+1], origin + row,   flat, triY, cs );
-                setVertex( &vertexData[(quad*6 + 2)*VERTEX_SIZE], origin + col,   primary.nodes[index+width],   compare.nodes[index+width], origin + row+1, flat, triY, cs );
-                // Tri 2
-                a = glm::vec3( (origin+col+1),   (primary.nodes[index+1]),     (origin+row)   );
-                b = glm::vec3( (origin+col+1), (primary.nodes[index+1+width]), (origin+row+1) );
-                c = glm::vec3( (origin+col),   (primary.nodes[index+width]),   (origin+row+1) );
-                normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
-                flat = abs(normal.y);
-                triY = (a.y + b.y + c.y) / 3;
-                setVertex( &vertexData[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, primary.nodes[index+1],       compare.nodes[index+1], origin + row,   flat, triY, cs );
-                setVertex( &vertexData[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, primary.nodes[index+1+width], compare.nodes[index+1+width], origin + row+1, flat, triY, cs );
-                setVertex( &vertexData[(quad*6 + 5)*VERTEX_SIZE], origin + col,   primary.nodes[index+width],   compare.nodes[index+width], origin + row+1, flat, triY, cs );
-            }
-            else
-            {
-                // Tri 1
-                glm::vec3 a = glm::vec3( (origin+col),   (primary.nodes[index]),         (origin+row)   );
-                glm::vec3 b = glm::vec3( (origin+col+1), (primary.nodes[index+1+width]), (origin+row+1) );
-                glm::vec3 c = glm::vec3( (origin+col),   (primary.nodes[index+width]),   (origin+row+1) );
-                glm::vec3 normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
-                float flat = abs(normal.y);
-                float triY = (a.y + b.y + c.y) / 3;
-                setVertex( &vertexData[(quad*6 + 0)*VERTEX_SIZE], origin + col,   primary.nodes[index],         compare.nodes[index], origin + row,   flat, triY, cs );
-                setVertex( &vertexData[(quad*6 + 1)*VERTEX_SIZE], origin + col+1, primary.nodes[index+1+width], compare.nodes[index+1+width], origin + row+1, flat, triY, cs );
-                setVertex( &vertexData[(quad*6 + 2)*VERTEX_SIZE], origin + col,   primary.nodes[index+width],   compare.nodes[index+width], origin + row+1, flat, triY, cs );
-                // Tri 2
-                a = glm::vec3( (origin+col+1),   (primary.nodes[index+1]),     (origin+row)   );
-                b = glm::vec3( (origin+col+1), (primary.nodes[index+1+width]), (origin+row+1) );
-                c = glm::vec3( (origin+col),   (primary.nodes[index]),         (origin+row)   );
-                normal = glm::normalize( glm::cross( (a-c), (a-b) ) );
-                flat = abs(normal.y);
-                triY = (a.y + b.y + c.y) / 3;
-                setVertex( &vertexData[(quad*6 + 3)*VERTEX_SIZE], origin + col+1, primary.nodes[index+1],       compare.nodes[index+1], origin + row,   flat, triY, cs );
-                setVertex( &vertexData[(quad*6 + 4)*VERTEX_SIZE], origin + col+1, primary.nodes[index+1+width], compare.nodes[index+1+width], origin + row+1, flat, triY, cs );
-                setVertex( &vertexData[(quad*6 + 5)*VERTEX_SIZE], origin + col,   primary.nodes[index],         compare.nodes[index], origin + row,   flat, triY, cs );
-            }
-            quad++;
-        }
-    }
+    for (int row=0; row<quadWidth; row++) for(int col=0; col<width; col++)
+            if ( col != quadWidth ) // Skip if col & col+1 are on different rows
+                setQuad( col+offset, row+offset, &primary.nodes[row*width + col], &vertexData[quad++*6*Model::VERTEX_STRIDE], width, cs, toggle=!toggle );
 }
 
 Mesh::~Mesh()

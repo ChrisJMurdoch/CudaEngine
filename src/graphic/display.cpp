@@ -25,8 +25,8 @@ float yaw = -90, pitch = 0;
 // Programs
 std::list<GLuint> programs;
 
-// Models
-std::list<Model *> models;
+// Instances
+std::list<Instance *> instances;
 
 // Camera
 glm::vec3 focusPos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -149,18 +149,18 @@ void Display::refresh( float currentTime, float deltaTime )
 		glUseProgram(0);
 	}
 
-	// Render models
-	for( Model *model : models )
-		model->render( glm::vec3(0,0,0) );
+	// Render instances
+	for( Instance *instance : instances )
+		instance->render();
 
 	// Check inputs and display
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 }
 
-void Display::addModel(Model &model)
+void Display::addInstance(Instance *instance)
 {
-	models.push_back(&model);
+	instances.push_back(instance);
 }
 
 void loadShaders(const char *vertFilePath, const char *fragFilePath, GLuint &programID )

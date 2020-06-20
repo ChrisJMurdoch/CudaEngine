@@ -4,6 +4,7 @@
 
 // OpenGL interface
 #include <graphic/display.hpp>
+#include <graphic/instance.hpp>
 #include <graphic/model.hpp>
 
 // Procedural generation classes
@@ -59,10 +60,12 @@ int main( int argc, char *argv[] )
     Heightmap waterMap( mapFile("assets/generation/water.kval"), 500, math );
 	Model terrain = Model( Mesh( terrainMap, Mesh::landscape ), terrainProg, GL_STREAM_DRAW );
 	Model water = Model( Mesh( waterMap, Mesh::water ), waterProg, GL_STATIC_DRAW );
+    Instance ti = Instance( &terrain, glm::vec3(0,0,0) );
+    Instance wi = Instance( &water, glm::vec3(0,0,0) );
 
-    // Add terrain models to display
-    display.addModel(terrain);
-    display.addModel(water);
+    // Add terrain instances to display
+    display.addInstance(&ti);
+    display.addInstance(&wi);
 
     // Profile load time
     std::chrono::steady_clock::time_point loadEnd = std::chrono::steady_clock::now();

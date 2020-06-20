@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <graphic/model.hpp>
-
 #include <generation/mesh.hpp>
 
 #include <glad/glad.h>

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <graphic/model.hpp>
+#include <graphic/instance.hpp>
 
 #include <glad/glad.h>
 
@@ -11,6 +11,6 @@ public:
     Display();
     void refresh( float currentTime, float deltaTime );
     GLuint addShaderProg(const char *vertFilePath, const char *fragFilePath);
-    void addModel(Model &model);
+    void addInstance(Instance *instance);
     bool shouldClose();
 };

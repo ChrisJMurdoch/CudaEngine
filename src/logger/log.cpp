@@ -29,6 +29,7 @@ template void Log::print(Level, const char *, bool);
 template void Log::print(Level, unsigned __int64, bool);
 template void Log::print(Level, float, bool);
 template void Log::print(Level, bool, bool);
+template void Log::print(Level, char, bool);
 template void Log::print(Level, __int64, bool);
 
 void Log::check(int result, const char *op)

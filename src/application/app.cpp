@@ -34,6 +34,7 @@
 // === STANDARD INCLUDES ===
 
 #include <chrono>
+#include <vector>
 
 
 // === FUNCTIONS ===
@@ -63,7 +64,15 @@ int main( int argc, char *argv[] )
     Instance ti = Instance( &terrain, glm::vec3(0,0,0) );
     Instance wi = Instance( &water, glm::vec3(0,0,0) );
 
+    // Test model
+    std::vector<float> vdata = vertexFile("assets/models/triangle.vdat");
+    Model test = Model( Mesh( &vdata[0], vdata.size()/Model::VERTEX_STRIDE ), terrainProg, GL_STREAM_DRAW );
+    Instance te1 = Instance( &test, glm::vec3( -10, 10, -10 ) );
+    Instance te2 = Instance( &test, glm::vec3( 10, 10, 10 ) );
+
     // Add terrain instances to display
+    display.addInstance(&te1);
+    display.addInstance(&te2);
     display.addInstance(&ti);
     display.addInstance(&wi);
 

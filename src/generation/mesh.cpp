@@ -98,6 +98,12 @@ void setQuad( float x, float y, float *primary, float *vertexData, int width, Me
     }
 }
 
+Mesh::Mesh( float *vertexData, int nVertices )
+{
+    this->vertexData = vertexData;
+    this->nVertices = nVertices;
+}
+
 Mesh::Mesh( Heightmap &primary, ColourScheme cs ) : Mesh( primary, primary, cs ) {}
 Mesh::Mesh( Heightmap &primary, Heightmap &compare, ColourScheme cs )
 {

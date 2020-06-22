@@ -107,6 +107,10 @@ std::vector<float> vertexFile(const char *filename)
     std::vector<float> floats;
     while ( getline (file, line) )
     {
+        // Skip comments and empty lines
+        if ( line.size() == 0 || line.at(0) == '/' )
+            continue;
+
         std::vector<std::string> words = split( line, ',', ' ' );
         for (std::string s : words)
         {

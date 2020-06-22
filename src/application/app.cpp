@@ -67,8 +67,8 @@ int main( int argc, char *argv[] )
     // Test model
     std::vector<float> vdata = vertexFile("assets/models/triangle.vdat");
     Model test = Model( Mesh( &vdata[0], vdata.size()/Model::VERTEX_STRIDE ), terrainProg, GL_STREAM_DRAW );
-    Instance te1 = Instance( &test, glm::vec3( -10, 10, -10 ) );
-    Instance te2 = Instance( &test, glm::vec3( 10, 10, 10 ) );
+    Instance te1 = Instance( &test, glm::vec3( 20, -0.3, 20 ) );
+    Instance te2 = Instance( &test, glm::vec3( 10, -0.3, 10 ) );
 
     // Add terrain instances to display
     display.addInstance(&te1);

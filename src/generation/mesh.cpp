@@ -100,8 +100,9 @@ void setQuad( float x, float y, float *primary, float *vertexData, int width, Me
 
 Mesh::Mesh( float *vertexData, int nVertices )
 {
-    this->vertexData = vertexData;
     this->nVertices = nVertices;
+    this->vertexData = new float[nVertices * Model::VERTEX_STRIDE];
+    std::memcpy( this->vertexData, vertexData, nVertices*Model::VERTEX_STRIDE*sizeof(float) );
 }
 
 Mesh::Mesh( Heightmap &primary, ColourScheme cs ) : Mesh( primary, primary, cs ) {}

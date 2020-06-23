@@ -1,0 +1,5 @@
+sampling:hash
+octaves:1
+period:1
+min:-0.2
+max:0.2

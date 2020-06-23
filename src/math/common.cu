@@ -171,7 +171,6 @@ float mountain(int x, int y, float period)
     float a3 = 8;
     float a4 = 4;
     float a5 = 2;
-    float a6 = 1;
 
     // Terrain samples
     float s1 = perlinSample(x, y, period/ 1);
@@ -179,10 +178,9 @@ float mountain(int x, int y, float period)
     float s3 = perlinSample(x, y, period/ 4);
     float s4 = perlinSample(x, y, period/ 8);
     float s5 = perlinSample(x, y, period/16);
-    float s6 = perlinSample(x, y, period/0.1);
 
     // Merge
-    float amp = a1 + a2 + a3 + a4 + a5 + a6;
-    float total = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5)  + (s6*a6) ) / amp;
+    float amp = a1 + a2 + a3 + a4 + a5;
+    float total = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5) ) / amp;
     return total;
 }

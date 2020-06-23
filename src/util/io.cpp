@@ -5,6 +5,47 @@
 
 #include <fstream>
 
+std::vector<std::string> split( std::string line, char d1, char d2 )
+{
+    // Get character array
+    const char *array = line.c_str();
+
+    static std::vector<std::string> words;
+    words.clear();
+
+    // Iterate through characters
+    int i = 0;
+    char c = array[i++];
+    bool done = false;
+    while ( !done )
+    {
+        std::vector<char> word;
+
+        while ( c != d1 && c != d2 && c != '\0' )
+        {
+            
+            word.push_back(c);
+            c = array[i++];
+        }
+        word.push_back('\0');
+
+        if ( word.size() > 1 )
+        {
+            words.push_back( std::string( &word[0] ) );
+        }
+
+        if ( c == '\0' )
+        {
+            done = true;
+            continue;
+        }
+
+        c = array[i++];
+    }
+
+    return words;
+}
+
 void divide(std::string input, char delimiter, std::string &a, std::string &b)
 {
     // Get character array
@@ -52,47 +93,6 @@ std::map<std::string, std::string> mapFile(const char *filename)
     file.close();
 
     return map;
-}
-
-std::vector<std::string> split( std::string line, char d1, char d2 )
-{
-    // Get character array
-    const char *array = line.c_str();
-
-    static std::vector<std::string> words;
-    words.clear();
-
-    // Iterate through characters
-    int i = 0;
-    char c = array[i++];
-    bool done = false;
-    while ( !done )
-    {
-        std::vector<char> word;
-
-        while ( c != d1 && c != d2 && c != '\0' )
-        {
-            
-            word.push_back(c);
-            c = array[i++];
-        }
-        word.push_back('\0');
-
-        if ( word.size() > 1 )
-        {
-            words.push_back( std::string( &word[0] ) );
-        }
-
-        if ( c == '\0' )
-        {
-            done = true;
-            continue;
-        }
-
-        c = array[i++];
-    }
-
-    return words;
 }
 
 std::vector<float> vertexFile(const char *filename)

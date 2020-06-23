@@ -136,7 +136,7 @@ void Display::refresh( float currentTime, float deltaTime )
 
 	// Common matrices
 	glm::mat4 view = glm::lookAt( focusPos+rCamPos, focusPos, WORLD_UP );
-	glm::mat4 projection = glm::perspective( glm::radians(60.0f), (float)viewWidth/(float)viewHeight, 0.1f, 1000.0f ); // Clip 10cm - 1km
+	glm::mat4 projection = glm::perspective( glm::radians(60.0f), (float)viewWidth/(float)viewHeight, 0.1f, 100000.0f ); // Clip 10cm - 100km
 
 	// Update shader uniforms
 	for( GLuint program : programs )

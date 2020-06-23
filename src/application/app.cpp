@@ -58,8 +58,9 @@ int main( int argc, char *argv[] )
 	GLuint waterProg = display.addShaderProg( "shaders/Water.vert", "shaders/FShader.frag" );
 
     // Generate terrain models
-    Heightmap terrainMap( mapFile("assets/generation/terrain.kval"), 500, math );
-    Heightmap waterMap( mapFile("assets/generation/water.kval"), 500, math );
+    int width = argc>2 ? std::stoi( argv[2] ) : 500;
+    Heightmap terrainMap( mapFile("assets/generation/terrain.kval"), width, math );
+    Heightmap waterMap( mapFile("assets/generation/water.kval"), width, math );
 	Model terrain = Model( Mesh( terrainMap, Mesh::landscape ), terrainProg, GL_STREAM_DRAW );
 	Model water = Model( Mesh( waterMap, Mesh::water ), waterProg, GL_STATIC_DRAW );
     Instance ti = Instance( &terrain, glm::vec3(0,0,0) );

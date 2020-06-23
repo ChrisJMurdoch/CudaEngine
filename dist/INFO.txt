@@ -1,27 +1,31 @@
 
 Author: Chris Murdoch
-Date: 16/06/2020
+Date: 23/06/2020
 
-This program has been tested only for Windows 10 and requires the Visual Studio framework to run.
+
+Requirements:
+
+This program has only been tested on Windows 10.
+
+The Microsoft Visual C++ Redistributable is required to run the program.
+
 The program has optional hardware acceleration for NVIDA GPUs with architecture TESLA and up.
 
-To run with acceleration, use 'cuda' as the first cmd argument:
->   program cuda
+
+Using the program:
+
+To run with Hardware acceleration, use 'cuda' as the first command line argument:
+> program cuda
 To run without, any or no argument can be used.
 
-Terrain generation parameters can be altered in assets/generation.kval.
+Cuda acceleration will only speed up terrain generation for around 500 vertex width and up.
 
-Hardware acceleration will only speed up terrain generation for around 1000 vertex width and up.
+To specify the width of the map to generate, use an integer as the second command line argument:
+> program cuda 1000
+> program nocuda 300
 
-glfw3.dll is included for those who do not wish to install it themselves, however building from
-source will provide better OS specific optimisations in the library.
+Terrain generation parameters can be altered in assets/generation.
 
+Use WASD to move around the terrain, use Q and E to rotate.
 
-
-Using the program
-
-Use WASD to move around the terrain, use Q and E to rotate around the centre of focus.
-
-You can scroll in and out of the map using the scroll wheel.
-
-You can also erode the terrain over time by holding SPACE.
+You can zoom in and out of the map using the scroll wheel.

@@ -25,7 +25,7 @@ void main()
     worldPosition.z = wp4.z;
 
     // Normal based lighting
-    flatness = vertNormal.y;
+    flatness = pow( vertNormal.y, 0.75 );
 
     // Morph wave
     vec3 morphed = vertPosition;

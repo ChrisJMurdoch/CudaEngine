@@ -189,7 +189,7 @@ float mountain(int x, int y, float period)
 
     // Merge
     float amp = a1 + a2 + a3 + a4 + a5 + a6;
-    float stepped = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5) ) / amp;
-    float unstepped = ( (s6*a6) ) / amp;
-    return ( step( diverge(stepped), 7, 20) + unstepped );
+    float stepped = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5) + (s6*a6)) / amp;
+    float unstepped = ( 0 ) / amp;
+    return ( step( diverge(stepped), 10, 20) + unstepped );
 }

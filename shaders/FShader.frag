@@ -19,8 +19,9 @@ void main()
     const float glowRadius = 5;
     const float glowWidth = 1;
 
-    float glow = 1 - pow( ( (dist-glowRadius) * 2 * (1/glowWidth)), 2 );
-    glow = glow<0 ? 0 : glow;
+    // float glow = 1 - pow( ( (dist-glowRadius) * 2 * (1/glowWidth)), 2 );
+    // glow = glow<0 ? 0 : glow;
+    float glow = 0;
 
     vec4 lit = ( colour * pow(flatness, 1) );
     lit.a = colour.a;

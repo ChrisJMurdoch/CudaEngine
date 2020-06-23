@@ -37,7 +37,7 @@ __host__ __device__
 float diverge(float x)
 {
     const float PI = 3.14159265358979323846;
-    return 0.5 - ( cos(x*PI)*0.5 );
+    return 0.5 - ( cos( fmod(x,1.0f) * PI )*0.5 );
 }
 
 __host__ __device__
@@ -52,6 +52,12 @@ float falloff(float x)
 {
     const float PI = 3.14159265358979323846;
     return powf( sin(x*PI), 0.05 );
+}
+
+__host__ __device__
+float step(float x, float a, float s)
+{
+    return ( ( floor(x*s) + powf( diverge(x*s), a ) ) / s ) + ( 1 / (2*s) );
 }
 
 // SAMPLES (X,Y,P) => Z
@@ -170,7 +176,8 @@ float mountain(int x, int y, float period)
     float a2 = 16;
     float a3 = 8;
     float a4 = 4;
-    float a5 = 2;
+    float a5 = 0;
+    float a6 = 0;
 
     // Terrain samples
     float s1 = perlinSample(x, y, period/ 1);
@@ -178,9 +185,11 @@ float mountain(int x, int y, float period)
     float s3 = perlinSample(x, y, period/ 4);
     float s4 = perlinSample(x, y, period/ 8);
     float s5 = perlinSample(x, y, period/16);
+    float s6 = perlinSample(x, y, period/32);
 
     // Merge
-    float amp = a1 + a2 + a3 + a4 + a5;
-    float total = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5) ) / amp;
-    return total;
+    float amp = a1 + a2 + a3 + a4 + a5 + a6;
+    float stepped = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5) ) / amp;
+    float unstepped = ( (s6*a6) ) / amp;
+    return ( step( diverge(stepped), 7, 20) + unstepped );
 }

@@ -1,5 +1,5 @@
 sampling:mountain
 octaves:8
-period:50
+period:150
 min:-50
 max:50

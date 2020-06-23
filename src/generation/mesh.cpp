@@ -40,7 +40,7 @@ void setVertex(float *vertex, glm::vec3 pos, glm::vec3 normal, float triY, Mesh:
     glm::vec3 plains = lerp( dirt, grass, range( 0.7, 0.9, normal.y ) );
     glm::vec3 mountain = lerp( stone, snow, range( 0.7, 0.9, normal.y ) );
 
-    float SAND_DIRT = 1.5, DIRT_PLAINS = 2, PLAINS = 3, PLAINS_STONE = 5, STONE = 6, STONE_MOUNTAIN = 12, MOUNTAIN = 15;
+    float SAND_DIRT = 5, DIRT_PLAINS = 6, PLAINS = 7, PLAINS_STONE = 10, STONE = 12, STONE_MOUNTAIN = 19, MOUNTAIN = 20;
 
     if ( cs == Mesh::water )
         setVec( &vertex[Model::ATTR_COLOUR], waterColour );

@@ -30,7 +30,7 @@ void main()
     // Morph wave
     vec3 morphed = vertPosition;
     float morphAmount = ( sin( (morphed.x + time)*0.3f ) + sin( (morphed.z + time)*0.3f ) + sin( (-morphed.x + time)*0.4f ) * sin( (-morphed.z + time)*0.4f ) ) / 3;
-    morphed.y += morphAmount;
+    morphed.y += morphAmount / 2;
 
     // Transform position
     gl_Position = projection * view * model * vec4(morphed, 1.0f);

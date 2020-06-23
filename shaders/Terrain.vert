@@ -40,4 +40,9 @@ void main()
     underWater /= 10;
     underWater = underWater>1 ? 1 : underWater;
     colour = vec4( vertColour.r*(1-underWater), vertColour.g*(1-(underWater/2)), vertColour.b, 1 );
+
+    // Display flatness
+    const float opacity = 0;
+    vec4 f = flatness>0.95 ? vec4( 0, 1, 0, 1 ) : vec4( 1, 0, 0, 1 );
+    colour = colour*(1-opacity) + f*opacity;
 }

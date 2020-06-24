@@ -57,26 +57,19 @@ int main( int argc, char *argv[] )
 	GLuint terrainProg = display.addShaderProg( "shaders/Terrain.vert", "shaders/FShader.frag" );
 	GLuint waterProg = display.addShaderProg( "shaders/Water.vert", "shaders/FShader.frag" );
 
-    // Generate terrain models
+    // Get map width
     int width = argc>2 ? std::stoi( argv[2] ) : 500;
+
+    // Generate water model
+	Model water = Model( Mesh( Heightmap( mapFile("assets/generation/water.kval"), width, math ), Mesh::water ), waterProg, GL_STATIC_DRAW );
+
+    // Generate terrain model
     Heightmap terrainMap( mapFile("assets/generation/terrain.kval"), width, math );
-    Heightmap waterMap( mapFile("assets/generation/water.kval"), width, math );
 	Model terrain = Model( Mesh( terrainMap, Mesh::landscape ), terrainProg, GL_STREAM_DRAW );
-	Model water = Model( Mesh( waterMap, Mesh::water ), waterProg, GL_STATIC_DRAW );
+
+    // Add instances to display
     Instance ti = Instance( &terrain, glm::vec3(0,0,0) );
     Instance wi = Instance( &water, glm::vec3(0,0,0) );
-
-    // Test model
-    std::vector<float> vdata = vertexFile("assets/models/sailboat.vdat");
-    Model test = Model( Mesh( &vdata[0], vdata.size()/Model::VERTEX_STRIDE ), terrainProg, GL_STREAM_DRAW );
-    Instance te1 = Instance( &test, glm::vec3( 20, -0.3, 20 ) );
-    Instance te2 = Instance( &test, glm::vec3( 10, -0.3, 10 ) );
-    Instance te3 = Instance( &test, glm::vec3( 0, -0.3, 30 ) );
-
-    // Add terrain instances to display
-    //display.addInstance(&te1);
-    //display.addInstance(&te2);
-    //display.addInstance(&te3);
     display.addInstance(&ti);
     display.addInstance(&wi);
 

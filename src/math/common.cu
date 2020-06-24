@@ -60,6 +60,13 @@ float step(float x, float a, float s)
     return ( ( floor(x*s) + powf( diverge(x*s), a ) ) / s ) + ( 1 / (2*s) );
 }
 
+__host__ __device__
+float elevate(float x)
+{
+    const float A = 0.6;
+    return ( 1 - A ) + A * powf( x, 2 );
+}
+
 // SAMPLES (X,Y,P) => Z
 
 __host__ __device__
@@ -120,7 +127,7 @@ __host__ __device__
 float perlinRidgeSample(int x, int y, float period)
 {
     float neg = ( perlinSample(x, y, period)*2 ) - 1 ;
-    return 1 - abs( neg );
+    return 0.6 - abs( neg );
 }
 
 __host__ __device__
@@ -171,6 +178,41 @@ float fractal(int x, int y, float period, MathEngine::Sample sample, int octaves
 __host__ __device__
 float mountain(int x, int y, float period)
 {
+    // Domain distortion
+    float distortion = period;
+    float dx = x + perlinSample(x, y, period/1) * distortion;
+    float dy = y + perlinSample(x+9999, y+9999, period/2) * distortion;
+
+    // Amplitudes
+    float a1 = 32;
+    float a2 = 16;
+    float a3 = 8;
+    float a4 = 4;
+    float a5 = 2;
+    float a6 = 1;
+
+    // Terrain samples
+    float s1 = perlinSample(dx, dy, period/ 1);
+    float s2 = perlinSample(dx, dy, period/ 2);
+    float s3 = perlinSample(dx, dy, period/ 4);
+    float s4 = perlinSample(x, y, period/ 8);
+    float s5 = perlinSample(x, y, period/16);
+    float s6 = perlinSample(x, y, period/32);
+
+    // Merge
+    float amp = a1 + a2 + a3 + a4 + a5 + a6;
+    float total = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5) + (s6*a6) ) / amp;
+    return total;
+}
+
+__host__ __device__
+float plateau(int x, int y, float period)
+{
+    // Domain distortion
+    float distortion = 50;
+    float dx = x + perlinSample(x, y, period/1) * distortion;
+    float dy = y + perlinSample(x+9999, y+9999, period/2) * distortion;
+
     // Amplitudes
     float a1 = 32;
     float a2 = 16;
@@ -180,16 +222,16 @@ float mountain(int x, int y, float period)
     float a6 = 0;
 
     // Terrain samples
-    float s1 = perlinSample(x, y, period/ 1);
-    float s2 = perlinSample(x, y, period/ 2);
-    float s3 = perlinSample(x, y, period/ 4);
-    float s4 = perlinSample(x, y, period/ 8);
+    float s1 = perlinSample(dx, dy, period/ 1);
+    float s2 = perlinSample(dx, dy, period/ 2);
+    float s3 = perlinSample(dx, dy, period/ 4);
+    float s4 = perlinSample(dx, dy, period/ 8);
     float s5 = perlinSample(x, y, period/16);
     float s6 = perlinSample(x, y, period/32);
 
     // Merge
     float amp = a1 + a2 + a3 + a4 + a5 + a6;
-    float stepped = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5) + (s6*a6)) / amp;
+    float stepped = ( (s1*a1) + (s2*a2) + (s3*a3) + (s4*a4) + (s5*a5) + (s6*a6) ) / amp;
     float unstepped = ( 0 ) / amp;
     return ( step( diverge(stepped), 10, 20) + unstepped );
 }

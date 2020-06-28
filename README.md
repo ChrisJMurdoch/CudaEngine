@@ -3,6 +3,13 @@
 
 C++ Terrain generation and rendering engine with optional hardware acceleration.
 
+## Deprecated
+
+This repository has been discontinued and split into:
+[HardwareNoise](https://github.com/ChrisJMurdoch/HardwareNoise), 
+[GLRender](https://github.com/ChrisJMurdoch/GLRender), and 
+[CppUtility](https://github.com/ChrisJMurdoch/CppUtility).
+
 ## Requirements
 
 The **Microsoft Visual C++ Redistributable** is required to run the program.
